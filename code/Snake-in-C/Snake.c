@@ -393,7 +393,7 @@ int main()
             {
                 snakeY--;
             }
-            else if (direction % 4 == 2)
+            else if (direction == 2)
             {
                 snakeX++;
             }
@@ -431,7 +431,6 @@ int main()
         GameOverScreen(screenState, screenHoehe, screenBreite);
         UpdateScreen(screenState, screenHoehe, screenBreite);
         Sleep(3000);
-        // Warte auf Benutzereingabe
         StartNewScreen(screenState, screenHoehe, screenBreite);
         UpdateScreen(screenState, screenHoehe, screenBreite);
         again = 0;
