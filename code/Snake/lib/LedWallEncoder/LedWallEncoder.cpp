@@ -50,7 +50,7 @@ void LWC_Encode(uint8_t buffer[], const uint8_t image[][16])
         for (int x = 0; x < 16; x++)
         {
             const uint8_t pixelpos = TranslationTable[x][y];
-            buffer[pixelpos] = image[y][x];
+            buffer[pixelpos] = image[x][y];
         }
     }
 }
