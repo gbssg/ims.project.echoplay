@@ -81,8 +81,6 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
         }
     }
 
-    delay(100);
-
     if (leftButton.isClickedQueueEmpty() == false)
     {
         leftButton.LEDoff();
