@@ -56,12 +56,12 @@ void ResetButtonQueue(QwiicButton button)
 // Auf einen Knopfdruck warten mit LED, Gibt zurück welcher Knopf gedrückt worde. (leftButton = 1, rightButton = 2, both = 3)
 int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
 {
-    uint8_t button = 0;
+    SimpleSoftTimer dobbleClickTimer(200);
 
     ResetButtonQueue(rightButton);
     ResetButtonQueue(leftButton);
 
-    while (rightButton.isClickedQueueEmpty() == true && leftButton.isClickedQueueEmpty() == true)
+    while (rightButton.isClickedQueueEmpty() && leftButton.isClickedQueueEmpty())
     {
         if (leftButton.isPressed())
         {
@@ -79,20 +79,37 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
         {
             rightButton.LEDoff();
         }
+
+        // Put Red Button Handler here
+
+        // Put Yellow Button Handler here
+    }
+
+    dobbleClickTimer.start(200);
+
+    while (!dobbleClickTimer.isTimeout())
+    {
+        if (!rightButton.isClickedQueueEmpty() && !leftButton.isClickedQueueEmpty())
+        {
+            return 3;
+        }
+        // Put Red Button Handler here
+
+        // Put Yellow Button Handler here
     }
 
     if (leftButton.isClickedQueueEmpty() == false)
     {
         leftButton.LEDoff();
-        button += 1;
+        return 1;
     }
     if (rightButton.isClickedQueueEmpty() == false)
     {
         rightButton.LEDoff();
-        button += 2;
+        return 2;
     }
 
-    return button;
+    return 0;
 }
 
 // Überprüft ob ein Knopfgedrückt ist und aktiviert die LED für den Knopf
