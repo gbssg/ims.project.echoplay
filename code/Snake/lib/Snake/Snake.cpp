@@ -32,6 +32,9 @@ static tPoint apple = {0}; // Position des Apfels
 static int appleX = 0;     // X-Position des Apfels
 static int appleY = 0;     // Y-Position des Apfels
 
+// Timers for certain events
+SimpleSoftTimer playAgainTimer(2000);
+
 // Malt den Titelscreen von Snake auf das gewählte Bild
 void SnakeTitleScreen(uint8_t image[16][16])
 {
@@ -127,60 +130,47 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
     }
 }
 
+// Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
+int ChooseDifficulty(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+{
+    difficulty = 1;
+    difficultyChosen = false;
+
+    while (!difficultyChosen)
+    {
+        SchweirigskeitScreen(image, difficulty);
+        UpdateScreen(buffer, image);
+        button = WaitForButtonPress(leftButton, rightButton);
+
+        if (button == 3)
+        {
+            difficultyChosen = true;
+        }
+
+        if (!difficultyChosen)
+        {
+            Serial.println("Knopf wählen");
+            if (button == 1 && difficulty > 1)
+            {
+                Serial.println("Linker Knopf gedrückt");
+                difficulty--;
+            }
+            else if (button == 2 && difficulty < 3)
+            {
+                Serial.println("Rechter Knopf gedrückt");
+                difficulty++;
+            }
+        }
+    }
+    return difficulty;
+}
+
 // Malt ein Bild so wie es am Anfang von Snake aussehen sollte
 void SnakeSetup(uint8_t image[16][16], tPoint snake)
 {
     EmptyScreen(image);
 
     image[snake.posY][snake.posX] = 1;
-}
-
-// Malt ein Bild so das es Game Over beinhaltet
-void SnakeGameOverScreen(uint8_t image[16][16])
-{
-    uint8_t gameOverScreen[16][16] = {
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-        {0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
-        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
-        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
-        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
-        {0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
-        {0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-
-    DrawImage(image, gameOverScreen);
-}
-
-// Malt ein Bild so das es Again? auf dem Bild zeigt
-void SnakeStartNewScreen(uint8_t image[16][16])
-{
-    uint8_t startNewScreen[16][16] = {
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0},
-        {0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-        {0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0},
-        {0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0},
-        {0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-        {0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-
-    DrawImage(image, startNewScreen);
 }
 
 // Ändert die Richtung von der Snake mit der gegebenen geschindigkeit
@@ -404,39 +394,52 @@ void DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[], uint8_t i
     UpdateScreen(buffer, image);
 }
 
-// Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
-int ChooseDifficulty(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+// Malt ein Bild so das es Game Over beinhaltet
+void SnakeGameOverScreen(uint8_t image[16][16])
 {
-    difficulty = 1;
-    difficultyChosen = false;
+    uint8_t gameOverScreen[16][16] = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0},
+        {0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
+        {0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    while (!difficultyChosen)
-    {
-        SchweirigskeitScreen(image, difficulty);
-        UpdateScreen(buffer, image);
-        button = WaitForButtonPress(leftButton, rightButton);
+    DrawImage(image, gameOverScreen);
+}
 
-        if (button == 3)
-        {
-            difficultyChosen = true;
-        }
+// Malt ein Bild so das es Again? auf dem Bild zeigt
+void SnakeStartNewScreen(uint8_t image[16][16])
+{
+    uint8_t startNewScreen[16][16] = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0},
+        {0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+        {0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0},
+        {0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0},
+        {0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0},
+        {0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-        if (!difficultyChosen)
-        {
-            Serial.println("Knopf wählen");
-            if (button == 1 && difficulty > 1)
-            {
-                Serial.println("Linker Knopf gedrückt");
-                difficulty--;
-            }
-            else if (button == 2 && difficulty < 3)
-            {
-                Serial.println("Rechter Knopf gedrückt");
-                difficulty++;
-            }
-        }
-    }
-    return difficulty;
+    DrawImage(image, startNewScreen);
 }
 
 // Startet das Spiel Snake
@@ -484,6 +487,10 @@ void PlaySnake(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, Qw
         // LEDs vom Controller einschalten falls gedrückt
         LEDOnPress(leftButton, rightButton);
 
+        // Put Red Button Handler here
+
+        // Put Yellow Button Handler here
+
         // Ändert die Richtung von der Snake
         if (moveTimer.isTimeout())
         {
@@ -521,7 +528,15 @@ void PlaySnake(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, Qw
     // Spiel beenden
     SnakeGameOverScreen(image);
     UpdateScreen(buffer, image);
-    delay(3000);
+
+    playAgainTimer.start(2000);
+    while (!playAgainTimer.isTimeout())
+    {
+        // Put Red Button Handler here
+
+        // Put Yellow Button Handler here
+    }
+
     leftButton.LEDoff();
     rightButton.LEDoff();
 
