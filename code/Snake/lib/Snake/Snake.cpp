@@ -461,7 +461,7 @@ void PlaySnake(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, Qw
     snakeLength = 0;
     snakeDirection = 0;
     apple = {0};
-    speed = 500 / difficulty;
+    speed = 300 / difficulty;
     tempTime[4] = {0};
 
     // Timer für den Moveevent
