@@ -132,3 +132,19 @@ void LEDOnPress(QwiicButton leftButton, QwiicButton rightButton)
         rightButton.LEDoff();
     }
 }
+
+// Ein Funktion von der Glyph Library um den jetzigen zustand vom Screen zu malen
+void ImagePrint(const uint8_t image[][16])
+{
+    Serial.println("+----------------------------------+");
+    for (int y = 0; y < 16; y++)
+    {
+        Serial.print("| ");
+        for (int x = 0; x < 16; x++)
+        {
+            Serial.print(image[y][x] > 0 ? "XX" : "  ");
+        }
+        Serial.println(" |");
+    }
+    Serial.println("+----------------------------------+");
+}

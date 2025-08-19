@@ -27,3 +27,6 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton);
 
 // Überprüft ob ein Knopfgedrückt ist und aktiviert die LED für den Knopf
 void LEDOnPress(QwiicButton leftButton, QwiicButton rightButton);
+
+// Ein Funktion von der Glyph Library um den jetzigen zustand vom Screen zu malen
+void ImagePrint(const uint8_t image[][16]);
