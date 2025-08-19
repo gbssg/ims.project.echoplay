@@ -4,49 +4,36 @@
 #include <LedWallEncoder.h>
 #include <SparkFun_Qwiic_Button.h>
 #include <SimpleSoftTimer.h>
+#include <EchoPlay.h>
 
 using namespace HolisticSolutions;
 
-typedef struct sPoint
-{
-    uint8_t posX;
-    uint8_t posY;
-} tPoint;
+// Allgemeine Statische Variablen für das Spiel deklarieren
+static int difficulty = 1;            // 1 = Easy, 2 = Medium, 3 = Hard
+static bool gameOver = false;         // Variable, die angibt, ob das Spiel vorbei ist
+static bool difficultyChosen = false; // Variable, die angibt ob die Schwierigkeits selektion abgeschlossen ist.
+static int button = 0;                // Variable welche sagt welcher Knopf gedrückt wurde (leftButton = 1, rightButton = 2, both = 3)
+unsigned long tempTime[4] = {0};      // Variable deklarieren um eine Temporäre Zeit anzugeben [0](0 = nichts, leftButton = 1, rightButton = 2) [1](Zeit des angegebenen Knopfes) [2/3](2 = right, 3 = left | Variabeln um zu zählen ob es ein Press ist oder Konpf losgelassen)
 
-// Malt ein das image gleich wie das newImage
-void DrawImage(uint8_t image[][16], uint8_t newImage[][16])
-{
-    for (int y = 0; y < 16; ++y)
-    {
-        for (int x = 0; x < 16; ++x)
-        {
-            image[y][x] = newImage[y][x];
-        }
-    }
-}
+// Statisch Variablen für die Snake deklarieren
+static int snakeLength = 0;    // Länge der Schlange
+static tPoint snake = {7, 7};  // Position des Schlangenkopfes
+static int snakeX = 7;         // X-Position der Schlange
+static int snakeY = 7;         // Y-Position der Schlange
+static int snakeDirection = 0; // Richtung der Schlange (0 = oben, 1 = rechts, 2 = unten, 3 = links)
+static int speed = 0;          // Die Geschindigkeit der Snake
+// Statische Variablen für den Schlangenschwanz
+static tPoint snakeTail[256] = {0}; // Positionen der Schlangenschwanzpixel.
+static int snakeTailX[256] = {0};   // X-Position der Schlangenschwanz-Pixel
+static int snakeTailY[256] = {0};   // Y-Position der Schlangenschwanz-Pixel
 
-// Macht ein gewähltes Bild zu nur nullen
-void EmptyScreen(uint8_t image[16][16])
-{
-    for (int y = 0; y < 16; ++y)
-    {
-        for (int x = 0; x < 16; ++x)
-        {
-            image[y][x] = 0;
-        }
-    }
-}
-
-// Macht ein gewoltes Bild in den Buffer und dieser wird auf den Screen gemalt und angezeigt
-void UpdateScreen(uint8_t buffer[], uint8_t image[16][16])
-{
-    LWC_Encode(buffer, image);
-
-    WD_BufferOutput(buffer);
-}
+// Statische Variablen für das Essen deklarieren
+static tPoint apple = {0}; // Position des Apfels
+static int appleX = 0;     // X-Position des Apfels
+static int appleY = 0;     // Y-Position des Apfels
 
 // Malt den Titelscreen von Snake auf das gewählte Bild
-void TitleScreen(uint8_t image[16][16])
+void SnakeTitleScreen(uint8_t image[16][16])
 {
     uint8_t TitleScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -141,15 +128,15 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
 }
 
 // Malt ein Bild so wie es am Anfang von Snake aussehen sollte
-void SnakeSetup(uint8_t image[16][16], int snakeX, int snakeY)
+void SnakeSetup(uint8_t image[16][16], tPoint snake)
 {
     EmptyScreen(image);
 
-    image[snakeY][snakeX] = 1;
+    image[snake.posY][snake.posX] = 1;
 }
 
 // Malt ein Bild so das es Game Over beinhaltet
-void GameOverScreen(uint8_t image[16][16])
+void SnakeGameOverScreen(uint8_t image[16][16])
 {
     uint8_t gameOverScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -173,7 +160,7 @@ void GameOverScreen(uint8_t image[16][16])
 }
 
 // Malt ein Bild so das es Again? auf dem Bild zeigt
-void StartNewScreen(uint8_t image[16][16])
+void SnakeStartNewScreen(uint8_t image[16][16])
 {
     uint8_t startNewScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -196,133 +183,141 @@ void StartNewScreen(uint8_t image[16][16])
     DrawImage(image, startNewScreen);
 }
 
-// Auf einen Knopfdruck warten mit LED, Gibt zurück welcher Knopf gedrückt worde. (leftButton = 1, rightButton = 2, both = 3)
-int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
-{
-    uint8_t button = 0;
-    rightButton.clearEventBits();
-    leftButton.clearEventBits();
-
-    while (!leftButton.hasBeenClicked() && !rightButton.hasBeenClicked())
-    {
-        if (leftButton.isPressed())
-        {
-            leftButton.LEDon(255);
-        }
-        else
-        {
-            leftButton.LEDoff();
-        }
-        if (rightButton.isPressed())
-        {
-            rightButton.LEDon(255);
-        }
-        else
-        {
-            rightButton.LEDoff();
-        }
-    }
-
-    delay(50); // Warten falls beide Knöpfe gedrückt werden;
-
-    if (leftButton.hasBeenClicked())
-    {
-        leftButton.LEDoff();
-        button += 1;
-    }
-    if (rightButton.hasBeenClicked())
-    {
-        rightButton.LEDoff();
-        button += 2;
-    }
-
-    return button;
-}
-
 // Ändert die Richtung von der Snake mit der gegebenen geschindigkeit
-void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &snakeDirection, int speed)
+void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &snakeDirection, unsigned long tempTime[4])
 {
-    SimpleSoftTimer timer(speed);
-    bool buttonPressed = false;
+    unsigned long leftTime = 0;
+    unsigned long rightTime = 0;
 
-    timer.restart();
-    while (!timer.isTimeout())
+    bool validTime = false;
+
+    Serial.print("leftbutton queue empty?: ");
+    Serial.println(leftButton.isPressedQueueEmpty());
+    Serial.print("rightbutton queue empty?: ");
+    Serial.println(rightButton.isPressedQueueEmpty());
+    Serial.println("tempTime 0, 1, 2, 3: ");
+    Serial.println(tempTime[0]);
+    Serial.println(tempTime[1]);
+    Serial.println(tempTime[2]);
+    Serial.println(tempTime[3]);
+
+    if (!leftButton.isPressedQueueEmpty() || !rightButton.isPressedQueueEmpty() || tempTime[0] != 0)
     {
-        if (!buttonPressed)
+        while (!validTime)
         {
-            Serial.print("ok");
-            if (leftButton.hasBeenClicked())
+            if (tempTime[0] == 1)
             {
-                Serial.println();
-                Serial.println("Linker Knopf");
+                leftTime = tempTime[1];
+                validTime = true;
+            }
+            else if (!leftButton.isPressedQueueEmpty())
+            {
+                leftTime = leftButton.popPressedQueue();
+                if (tempTime[2] > 0)
+                {
+                    leftTime = 0;
+                    tempTime[2] = 0;
+                }
+                else
+                {
+                    validTime = true;
+                    tempTime[2]++;
+                }
+            }
+            else
+            {
+                validTime = true;
+            }
+        }
+
+        validTime = false;
+
+        while (!validTime)
+        {
+            if (tempTime[0] == 2)
+            {
+                rightTime = tempTime[1];
+                validTime = true;
+            }
+            else if (!rightButton.isPressedQueueEmpty())
+            {
+                rightTime = rightButton.popPressedQueue();
+                if (tempTime[3] > 0)
+                {
+                    rightTime = 0;
+                    tempTime[3] = 0;
+                }
+                else
+                {
+                    validTime = true;
+                    tempTime[3]++;
+                }
+            }
+            else
+            {
+                validTime = true;
+            }
+        }
+
+        if (leftTime > 0 && rightTime > 0)
+        {
+            if (leftTime < rightTime)
+            {
+                Serial.println("Both not null, left");
                 snakeDirection--;
-                buttonPressed = true;
+                tempTime[0] = 2;
+                tempTime[1] = rightTime;
             }
-            else if (rightButton.hasBeenClicked())
+            else if (rightTime < leftTime)
             {
-                Serial.println();
-                Serial.println("Rechter Knopf");
+                Serial.println("Both not null, right");
                 snakeDirection++;
-                buttonPressed = true;
+                tempTime[0] = 1;
+                tempTime[1] = leftTime;
             }
         }
-        if (leftButton.isPressed())
-        {
-            leftButton.LEDon(255);
-        }
         else
         {
-            leftButton.LEDoff();
+            if (leftTime != 0)
+            {
+                Serial.println("left null, right");
+                snakeDirection--;
+                tempTime[0] = 0;
+                tempTime[1] = 0;
+            }
+            else if (rightTime != 0)
+            {
+                Serial.println("right null, left");
+                snakeDirection++;
+                tempTime[0] = 0;
+                tempTime[1] = 0;
+            }
         }
-        if (rightButton.isPressed())
-        {
-            rightButton.LEDon(255);
-        }
-        else
-        {
-            rightButton.LEDoff();
-        }
-    }
-    Serial.println();
-    Serial.println();
-
-    leftButton.LEDoff();
-    rightButton.LEDoff();
-    leftButton.clearEventBits();
-    rightButton.clearEventBits();
-
-    if (snakeDirection < 0)
-    {
-        snakeDirection = 3;
-    }
-    else if (snakeDirection > 3)
-    {
-        snakeDirection = 0;
     }
 }
 
-// Platziert einen Appfel auf einen Gültigen Ort
-void PlantApple(int &appleX, int &appleY, int snakeX, int snakeY, int snakeTailX[], int snakeTailY[], int snakeLength)
+// Platziert einen Apfel auf einen Gültigen Ort
+void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[], int snakeLength)
 {
     bool goodApple = false;
 
-    appleX = rand() % 16;
-    appleY = rand() % 16;
+    apple->posX = rand() % 16;
+    apple->posY = rand() % 16;
     while (!goodApple)
     {
-        if (appleX == snakeX && appleY == snakeY)
+        if (apple->posX == snake->posX && apple->posY == snake->posY)
         {
-            appleX = rand() % 16;
-            appleY = rand() % 16;
+            apple->posX = rand() % 16;
+            apple->posY = rand() % 16;
         }
         else
         {
             for (int i = 0; i < snakeLength; i++)
             {
-                if (appleX == snakeTailX[i] && appleY == snakeTailY[i])
+                if (apple->posX == snakeTail[i].posX && apple->posY == snakeTail[i].posY)
                 {
-                    appleX = rand() % 16;
-                    appleY = rand() % 16;
+                    apple->posX = rand() % 16;
+                    apple->posY = rand() % 16;
                     break;
                 }
             }
@@ -332,45 +327,54 @@ void PlantApple(int &appleX, int &appleY, int snakeX, int snakeY, int snakeTailX
 }
 
 // Löscht den letzten Teil des Schlangenschwanzes und bewegt den Schwanz
-void UpdateSnakeTail(int snakeX, int snakeY, int snakeTailX[], int snakeTailY[], int snakeLength, uint8_t image[][16])
+void UpdateSnakeTail(tPoint snake, tPoint snakeTail[], int snakeLength, uint8_t image[][16])
 {
-    image[snakeTailY[snakeLength - 1]][snakeTailX[snakeLength - 1]] = 0;
+    image[snakeTail[snakeLength - 1].posY][snakeTail[snakeLength - 1].posX] = 0;
 
     for (int i = snakeLength; 1 < i; i--)
     {
-        snakeTailX[i - 1] = snakeTailX[i - 2];
-        snakeTailY[i - 1] = snakeTailY[i - 2];
+        snakeTail[i - 1].posX = snakeTail[i - 2].posX;
+        snakeTail[i - 1].posY = snakeTail[i - 2].posY;
     }
-    snakeTailX[0] = snakeX;
-    snakeTailY[0] = snakeY;
+    snakeTail[0].posX = snake.posX;
+    snakeTail[0].posY = snake.posY;
 }
 
 // Bewegt die Schlange in die gegebene Richtung
-void SnakeMovement(int snakeDirection, int &snakeX, int &snakeY)
+void SnakeMovement(int &snakeDirection, tPoint *snake)
 {
+    if (snakeDirection < 0)
+    {
+        snakeDirection = 3;
+    }
+    else if (snakeDirection > 3)
+    {
+        snakeDirection = 0;
+    }
+
     if (snakeDirection == 0)
     {
-        snakeX--;
+        snake->posX--;
     }
     else if (snakeDirection == 1)
     {
-        snakeY--;
+        snake->posY--;
     }
     else if (snakeDirection == 2)
     {
-        snakeX++;
+        snake->posX++;
     }
     else if (snakeDirection == 3)
     {
-        snakeY++;
+        snake->posY++;
     }
 }
 
 // Überprüft ob die Schlange das Spiel beendet hat
-void CheckForGameOver(int snakeX, int snakeY, int snakeTailX[], int snakeTailY[], int snakeLength, bool &gameOver)
+void CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength, bool &gameOver)
 {
 
-    if (snakeX < 0 || snakeX >= 16 || snakeY < 0 || snakeY >= 16)
+    if (snake->posX < 0 || snake->posX >= 16 || snake->posY < 0 || snake->posY >= 16)
     {
         Serial.println("Snake ist aus dem Spiel feld.. Game Over");
         gameOver = true;
@@ -378,7 +382,7 @@ void CheckForGameOver(int snakeX, int snakeY, int snakeTailX[], int snakeTailY[]
 
     for (int i = 0; i < snakeLength; i++)
     {
-        if (snakeX == snakeTailX[i] && snakeY == snakeTailY[i])
+        if (snake->posX == snakeTail[i].posX && snake->posY == snakeTail[i].posY)
         {
             Serial.println("Schlange berührt sich selbst... Game Over");
             gameOver = true;
@@ -386,16 +390,143 @@ void CheckForGameOver(int snakeX, int snakeY, int snakeTailX[], int snakeTailY[]
     }
 }
 
-// Zeichnet den Appfel, den Schlangenkopf und den Schlangenschwanz
-void DrawSnakenApple(int snakeX, int snakeY, int appleX, int appleY, int snakeTailX[], int snakeTailY[], uint8_t image[][16], uint8_t buffer[], int snakeLength)
+// Zeichnet den Apfel, den Schlangenkopf und den Schlangenschwanz
+void DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[], uint8_t image[][16], uint8_t buffer[], int snakeLength)
 {
-    image[snakeY][snakeX] = 1;
-    image[appleY][appleX] = 1;
+    image[snake->posY][snake->posX] = 1;
+    image[apple->posY][apple->posX] = 1;
 
     for (int i = 0; i < snakeLength; i++)
     {
-        image[snakeTailY[i]][snakeTailX[i]] = 1;
+        image[snakeTail[i].posY][snakeTail[i].posX] = 1;
     }
 
     UpdateScreen(buffer, image);
+}
+
+// Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
+int ChooseDifficulty(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+{
+    difficulty = 1;
+    difficultyChosen = false;
+
+    while (!difficultyChosen)
+    {
+        SchweirigskeitScreen(image, difficulty);
+        UpdateScreen(buffer, image);
+        button = WaitForButtonPress(leftButton, rightButton);
+
+        if (button == 3)
+        {
+            difficultyChosen = true;
+        }
+
+        if (!difficultyChosen)
+        {
+            Serial.println("Knopf wählen");
+            if (button == 1 && difficulty > 1)
+            {
+                Serial.println("Linker Knopf gedrückt");
+                difficulty--;
+            }
+            else if (button == 2 && difficulty < 3)
+            {
+                Serial.println("Rechter Knopf gedrückt");
+                difficulty++;
+            }
+        }
+    }
+    return difficulty;
+}
+
+// Startet das Spiel Snake
+void PlaySnake(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+{
+    // Titelscreen anzeigen
+    SnakeTitleScreen(image);
+    UpdateScreen(buffer, image);
+
+    // Auf einen Input warten
+    WaitForButtonPress(leftButton, rightButton);
+
+    // Schweirigkeitsgrad auswählen
+    difficulty = ChooseDifficulty(image, buffer, leftButton, rightButton);
+
+    // Spiel Variabeln zurücksetzen
+    gameOver = false;
+    snake = {7, 7};
+    snakeLength = 0;
+    snakeDirection = 0;
+    apple = {0};
+    speed = 500 / difficulty;
+    tempTime[4] = {0};
+
+    // Timer für den Moveevent
+    SimpleSoftTimer moveTimer(speed);
+
+    // Button queues leeren
+    ResetButtonQueue(leftButton);
+    ResetButtonQueue(rightButton);
+
+    // Screen für Snake vorbereiten
+    SnakeSetup(image, snake);
+    UpdateScreen(buffer, image);
+
+    // Platziert einen Apfel auf dem Feld
+    PlantApple(&apple, &snake, snakeTail, snakeLength);
+
+    // MoveTimer starten
+    moveTimer.start(speed);
+
+    // Die Haupt Spiel Schleife für Snake
+    while (!gameOver)
+    {
+        // LEDs vom Controller einschalten falls gedrückt
+        LEDOnPress(leftButton, rightButton);
+
+        // Ändert die Richtung von der Snake
+        if (moveTimer.isTimeout())
+        {
+            ChangeSnakeDirection(leftButton, rightButton, snakeDirection, tempTime);
+
+            // Alten SchlangenKnopf Löschen
+            image[snake.posY][snake.posX] = 0;
+
+            // Überprüfen ob die Schlange einen Apfel berührt und einen neuen erstellen
+            if (snake.posX == apple.posX && snake.posY == apple.posY)
+            {
+                snakeLength++;
+                PlantApple(&apple, &snake, snakeTail, snakeLength);
+            }
+
+            // Schlangenschwanzarray Updaten und hintersten Teil löschen falls es einen hat.
+            if (snakeLength > 0)
+            {
+                UpdateSnakeTail(snake, snakeTail, snakeLength, image);
+            }
+
+            // Bewegt die Schlange in die gewählt Richtung
+            SnakeMovement(snakeDirection, &snake);
+
+            // Überpüft ob die Schlange die Arena verlässt oder ob sie sich selber berührt
+            CheckForGameOver(&snake, snakeTail, snakeLength, gameOver);
+
+            // Malt die Schlange, und den Apfel auf den Screen
+            DrawSnakenApple(&snake, &apple, snakeTail, image, buffer, snakeLength);
+
+            moveTimer.restart();
+        }
+    }
+
+    // Spiel beenden
+    SnakeGameOverScreen(image);
+    UpdateScreen(buffer, image);
+    delay(3000);
+    leftButton.LEDoff();
+    rightButton.LEDoff();
+
+    // Spielwiederhol Screen anzeigen und auf Benutzereinegabe warten
+    SnakeStartNewScreen(image);
+    UpdateScreen(buffer, image);
+    WaitForButtonPress(leftButton, rightButton);
 }
