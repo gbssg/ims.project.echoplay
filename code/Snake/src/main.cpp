@@ -27,9 +27,9 @@ const char pin_SW2 = GPIO_NUM_32; // Optional, falls man den Roten Knopf verwend
 static uint8_t buffer[256] = {0};
 static uint8_t image[16][16] = {0};
 
-void setup()
+// prepares GPIO's for further instructions
+void PreparePins()
 {
-  // prepares GPIO's for further instructions
   pinMode(pin_enable, OUTPUT);
   pinMode(pin_latch, OUTPUT);
   pinMode(pin_data, OUTPUT);
@@ -38,6 +38,11 @@ void setup()
   pinMode(pin_SW2, INPUT_PULLUP);
   digitalWrite(pin_enable, LOW);
   digitalWrite(pin_data, HIGH);
+}
+
+void setup()
+{
+  PreparePins();
 
   WD_BufferOutput(buffer);
 
