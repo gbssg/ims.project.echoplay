@@ -9,31 +9,24 @@
 using namespace HolisticSolutions;
 
 // Allgemeine Statische Variablen für das Spiel deklarieren
-static int difficulty = 1;            // 1 = Easy, 2 = Medium, 3 = Hard
-static bool gameOver = false;         // Variable, die angibt, ob das Spiel vorbei ist
-static bool difficultyChosen = false; // Variable, die angibt ob die Schwierigkeits selektion abgeschlossen ist.
-static int button = 0;                // Variable welche sagt welcher Knopf gedrückt wurde (leftButton = 1, rightButton = 2, both = 3)
-unsigned long tempTime[4] = {0};      // Variable deklarieren um eine Temporäre Zeit anzugeben [0](0 = nichts, leftButton = 1, rightButton = 2) [1](Zeit des angegebenen Knopfes) [2/3](2 = right, 3 = left | Variabeln um zu zählen ob es ein Press ist oder Konpf losgelassen)
+static int difficulty = 1;              // 1 = Easy, 2 = Medium, 3 = Hard
+static bool gameOver = false;           // Variable, die angibt, ob das Spiel vorbei ist
+static unsigned long tempTime[4] = {0}; // Variable deklarieren um eine Temporäre Zeit anzugeben [0](0 = nichts, leftButton = 1, rightButton = 2) [1](Zeit des angegebenen Knopfes) [2/3](2 = right, 3 = left | Variabeln um zu zählen ob es ein Press ist oder Konpf losgelassen)
 
 // Statisch Variablen für die Snake deklarieren
 static int snakeLength = 0;    // Länge der Schlange
 static tPoint snake = {7, 7};  // Position des Schlangenkopfes
-static int snakeX = 7;         // X-Position der Schlange
-static int snakeY = 7;         // Y-Position der Schlange
 static int snakeDirection = 0; // Richtung der Schlange (0 = oben, 1 = rechts, 2 = unten, 3 = links)
 static int speed = 0;          // Die Geschindigkeit der Snake
+
 // Statische Variablen für den Schlangenschwanz
 static tPoint snakeTail[256] = {0}; // Positionen der Schlangenschwanzpixel.
-static int snakeTailX[256] = {0};   // X-Position der Schlangenschwanz-Pixel
-static int snakeTailY[256] = {0};   // Y-Position der Schlangenschwanz-Pixel
 
-// Statische Variablen für das Essen deklarieren
+// Statische Variablen für den Appfel deklarieren
 static tPoint apple = {0}; // Position des Apfels
-static int appleX = 0;     // X-Position des Apfels
-static int appleY = 0;     // Y-Position des Apfels
 
 // Timers for certain events
-SimpleSoftTimer playAgainTimer(2000);
+static SimpleSoftTimer playAgainTimer(2000);
 
 // Malt den Titelscreen von Snake auf das gewählte Bild
 void SnakeTitleScreen(uint8_t image[16][16])
@@ -62,7 +55,7 @@ void SnakeTitleScreen(uint8_t image[16][16])
 // Wählt mithilfe von difficulty den Richtigen schweirigkeitsscreen
 void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
 {
-    uint8_t difficultyScreenEinfach[16][16] = {
+    static uint8_t difficultyScreenEinfach[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
@@ -131,10 +124,11 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
 }
 
 // Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
-int ChooseDifficulty(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+int ChooseDifficulty(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
 {
+    char button = 0;
     difficulty = 1;
-    difficultyChosen = false;
+    bool difficultyChosen = false;
 
     while (!difficultyChosen)
     {
@@ -180,16 +174,6 @@ void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &
     unsigned long rightTime = 0;
 
     bool validTime = false;
-
-    Serial.print("leftbutton queue empty?: ");
-    Serial.println(leftButton.isPressedQueueEmpty());
-    Serial.print("rightbutton queue empty?: ");
-    Serial.println(rightButton.isPressedQueueEmpty());
-    Serial.println("tempTime 0, 1, 2, 3: ");
-    Serial.println(tempTime[0]);
-    Serial.println(tempTime[1]);
-    Serial.println(tempTime[2]);
-    Serial.println(tempTime[3]);
 
     if (!leftButton.isPressedQueueEmpty() || !rightButton.isPressedQueueEmpty() || tempTime[0] != 0)
     {
@@ -287,7 +271,7 @@ void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &
 }
 
 // Platziert einen Apfel auf einen Gültigen Ort
-void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[], int snakeLength)
+void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[256], int snakeLength)
 {
     bool goodApple = false;
 
@@ -317,7 +301,7 @@ void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[], int snakeLengt
 }
 
 // Löscht den letzten Teil des Schlangenschwanzes und bewegt den Schwanz
-void UpdateSnakeTail(tPoint snake, tPoint snakeTail[], int snakeLength, uint8_t image[][16])
+void UpdateSnakeTail(tPoint snake, tPoint snakeTail[256], int snakeLength, uint8_t image[16][16])
 {
     image[snakeTail[snakeLength - 1].posY][snakeTail[snakeLength - 1].posX] = 0;
 
@@ -381,7 +365,7 @@ void CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength, bool &
 }
 
 // Zeichnet den Apfel, den Schlangenkopf und den Schlangenschwanz
-void DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[], uint8_t image[][16], uint8_t buffer[], int snakeLength)
+void DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[256], uint8_t image[16][16], uint8_t buffer[256], int snakeLength)
 {
     image[snake->posY][snake->posX] = 1;
     image[apple->posY][apple->posX] = 1;
@@ -418,7 +402,7 @@ void SnakeGameOverScreen(uint8_t image[16][16])
     DrawImage(image, gameOverScreen);
 }
 
-// Malt ein Bild so das es Again? auf dem Bild zeigt
+// Malt ein Bild so das es "Again?" auf dem Bild zeigt
 void SnakeStartNewScreen(uint8_t image[16][16])
 {
     uint8_t startNewScreen[16][16] = {
@@ -443,7 +427,7 @@ void SnakeStartNewScreen(uint8_t image[16][16])
 }
 
 // Startet das Spiel Snake
-void PlaySnake(uint8_t image[][16], uint8_t buffer[], QwiicButton leftButton, QwiicButton rightButton)
+void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
 {
     // Titelscreen anzeigen
     SnakeTitleScreen(image);
