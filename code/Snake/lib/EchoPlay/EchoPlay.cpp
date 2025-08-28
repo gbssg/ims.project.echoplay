@@ -8,7 +8,7 @@
 using namespace HolisticSolutions;
 
 // Malt ein das image gleich wie das newImage
-void DrawImage(uint8_t image[][16], uint8_t newImage[][16])
+void DrawImage(uint8_t image[16][16], uint8_t newImage[][16])
 {
     for (int y = 0; y < 16; ++y)
     {
@@ -32,7 +32,7 @@ void EmptyScreen(uint8_t image[16][16])
 }
 
 // Macht ein gewoltes Bild in den Buffer und dieser wird auf den Screen gemalt und angezeigt
-void UpdateScreen(uint8_t buffer[], uint8_t image[16][16])
+void UpdateScreen(uint8_t buffer[256], uint8_t image[16][16])
 {
     LWC_Encode(buffer, image);
 
@@ -134,7 +134,7 @@ void LEDOnPress(QwiicButton leftButton, QwiicButton rightButton)
 }
 
 // Ein Funktion von der Glyph Library um den jetzigen zustand vom Screen zu malen
-void ImagePrint(const uint8_t image[][16])
+void ImagePrint(const uint8_t image[16][16])
 {
     Serial.println("+----------------------------------+");
     for (int y = 0; y < 16; y++)
