@@ -480,7 +480,7 @@ void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButto
         {
             ChangeSnakeDirection(leftButton, rightButton, snakeDirection, tempTime);
 
-            // Alten SchlangenKnopf Löschen
+            // Alten Schlangenkopf Löschen
             image[snake.posY][snake.posX] = 0;
 
             // Überprüfen ob die Schlange einen Apfel berührt und einen neuen erstellen
