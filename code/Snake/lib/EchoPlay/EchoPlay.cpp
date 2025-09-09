@@ -7,6 +7,23 @@
 
 using namespace HolisticSolutions;
 
+Compositor::Compositor()
+{
+}
+
+void Compositor::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
+{
+}
+
+Composition::Composition(Compositor *compositor) : _compositor(compositor)
+{
+}
+
+void Composition::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
+{
+    _compositor->startProgramm(image, buffer, leftButton, rightButton);
+}
+
 // Malt ein das image gleich wie das newImage
 void DrawImage(uint8_t image[16][16], uint8_t newImage[][16])
 {
@@ -41,7 +58,6 @@ void UpdateScreen(uint8_t buffer[256], uint8_t image[16][16])
 
 // Setzt ein Button Queue zurück
 void ResetButtonQueue(QwiicButton button)
-
 {
     while (!button.isClickedQueueEmpty())
     {
@@ -61,24 +77,9 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
     ResetButtonQueue(rightButton);
     ResetButtonQueue(leftButton);
 
-    while (rightButton.isClickedQueueEmpty() && leftButton.isClickedQueueEmpty())
+    while (rightButton.isPressedQueueEmpty() && leftButton.isPressedQueueEmpty())
     {
-        if (leftButton.isPressed())
-        {
-            leftButton.LEDon(255);
-        }
-        else
-        {
-            leftButton.LEDoff();
-        }
-        if (rightButton.isPressed())
-        {
-            rightButton.LEDon(255);
-        }
-        else
-        {
-            rightButton.LEDoff();
-        }
+        LEDOnPress(leftButton, rightButton);
 
         // Put Red Button Handler here
 
@@ -89,7 +90,7 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
 
     while (!dobbleClickTimer.isTimeout())
     {
-        if (!rightButton.isClickedQueueEmpty() && !leftButton.isClickedQueueEmpty())
+        if (!rightButton.isPressedQueueEmpty() && !leftButton.isPressedQueueEmpty())
         {
             return 3;
         }
@@ -98,12 +99,12 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton)
         // Put Yellow Button Handler here
     }
 
-    if (leftButton.isClickedQueueEmpty() == false)
+    if (leftButton.isPressedQueueEmpty() == false)
     {
         leftButton.LEDoff();
         return 1;
     }
-    if (rightButton.isClickedQueueEmpty() == false)
+    if (rightButton.isPressedQueueEmpty() == false)
     {
         rightButton.LEDoff();
         return 2;

@@ -10,6 +10,29 @@ typedef struct sPoint
     uint8_t posY;
 } tPoint;
 
+// Compositor
+class Compositor
+{
+public:
+    virtual void startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton);
+    virtual ~Compositor() = default;
+
+protected:
+    Compositor();
+};
+
+// Composition
+class Composition
+{
+public:
+    Composition(Compositor *);
+    virtual void startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton);
+    ~Composition() = default;
+
+private:
+    Compositor *_compositor;
+};
+
 // Malt ein das image gleich wie das newImage
 void DrawImage(uint8_t image[16][16], uint8_t newImage[16][16]);
 

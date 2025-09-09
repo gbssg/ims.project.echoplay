@@ -26,7 +26,7 @@ static tPoint snakeTail[256] = {0}; // Positionen der Schlangenschwanzpixel.
 static tPoint apple = {0}; // Position des Apfels
 
 // Timers for certain events
-static SimpleSoftTimer playAgainTimer(2000);
+static SimpleSoftTimer gameOverTimer(2000);
 
 // Malt den Titelscreen von Snake auf das gewählte Bild
 void SnakeTitleScreen(uint8_t image[16][16])
@@ -513,19 +513,22 @@ void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButto
     SnakeGameOverScreen(image);
     UpdateScreen(buffer, image);
 
-    playAgainTimer.start(2000);
-    while (!playAgainTimer.isTimeout())
+    gameOverTimer.start(2000);
+    while (!gameOverTimer.isTimeout() && !rightButton.isPressed() && !leftButton.isPressed())
     {
+        LEDOnPress(leftButton, rightButton);
+
         // Put Red Button Handler here
 
         // Put Yellow Button Handler here
     }
+}
 
-    leftButton.LEDoff();
-    rightButton.LEDoff();
+Snake::Snake()
+{
+}
 
-    // Spielwiederhol Screen anzeigen und auf Benutzereinegabe warten
-    SnakeStartNewScreen(image);
-    UpdateScreen(buffer, image);
-    WaitForButtonPress(leftButton, rightButton);
+void Snake::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
+{
+    PlaySnake(image, buffer, leftButton, rightButton);
 }

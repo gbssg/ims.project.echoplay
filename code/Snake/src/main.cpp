@@ -3,11 +3,11 @@
 #include <Wire.h>
 #include <Snake.h>
 #include <LedWallEncoder.h>
-#include <ClockProvider.h>
 #include <LEDWallDriver.h>
 #include <Glyph.h>
 #include <SimpleSoftTimer.h>
 #include <EchoPlay.h>
+#include <EchoButton.h>
 
 using namespace HolisticSolutions;
 
@@ -21,11 +21,16 @@ const char pin_clock = GPIO_NUM_26;
 const char pin_latch = GPIO_NUM_17;
 const char pin_SW1 = GPIO_NUM_16; // Gelber Knopf auf der Hinterseite der LED-Box
 const char pin_SW2 = GPIO_NUM_32; // Optional, falls man den Roten Knopf verwenden möchte
-// const char microphone_pin = GPIO_NUM_34; // Optional, falls ein Mikrofon verwendet wird
+// const char mic_pin = GPIO_NUM_34; // Optional, falls ein Mikrofon verwendet wird
+
+EchoButton yellowBtn(pin_SW1, true);
+EchoButton redBtn(pin_SW2, true);
 
 // Statische Variablen für den Bildschirm deklarieren
 static uint8_t buffer[256] = {0};
 static uint8_t image[16][16] = {0};
+
+Composition *SnakeComposition = new Composition(new Snake);
 
 // prepares GPIO's for further instructions
 void PreparePins()
@@ -65,9 +70,12 @@ void setup()
       ;
   }
   Serial.println("Right button acknowledged.");
+
+  leftButton.resetInterruptConfig();
+  rightButton.resetInterruptConfig();
 }
 
 void loop()
 {
-  PlaySnake(image, buffer, leftButton, rightButton);
+  SnakeComposition->startProgramm(image, buffer, leftButton, rightButton);
 }
