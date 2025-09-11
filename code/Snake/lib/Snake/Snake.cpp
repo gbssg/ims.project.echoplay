@@ -523,12 +523,3 @@ void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButto
         // Put Yellow Button Handler here
     }
 }
-
-Snake::Snake()
-{
-}
-
-void Snake::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
-{
-    PlaySnake(image, buffer, leftButton, rightButton);
-}

@@ -4,12 +4,12 @@
 #include <SparkFun_Qwiic_Button.h>
 #include <EchoPlay.h>
 
-class Snake : public Compositor
+class Snake : public iGame
 {
-public:
-    Snake();
-
-    void startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton);
+    void start() override
+    {
+        PlaySnake()
+    }
 };
 
 // Malt den Titelscreen von Snake auf das gewählte Bild

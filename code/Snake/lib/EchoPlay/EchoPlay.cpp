@@ -7,23 +7,6 @@
 
 using namespace HolisticSolutions;
 
-Compositor::Compositor()
-{
-}
-
-void Compositor::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
-{
-}
-
-Composition::Composition(Compositor *compositor) : _compositor(compositor)
-{
-}
-
-void Composition::startProgramm(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
-{
-    _compositor->startProgramm(image, buffer, leftButton, rightButton);
-}
-
 // Malt ein das image gleich wie das newImage
 void DrawImage(uint8_t image[16][16], uint8_t newImage[][16])
 {
