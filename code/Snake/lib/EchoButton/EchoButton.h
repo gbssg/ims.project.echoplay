@@ -7,6 +7,7 @@ public:
     EchoButton(const char &pinNr, const bool inverted = false);
     // Überprüft ob der Knopf gedrückt ist oder nicht
     bool isPressed();
+    bool hasBeenReleased = true;
 
 private:
     const char _pinNr;    // pinNr vom Knopf

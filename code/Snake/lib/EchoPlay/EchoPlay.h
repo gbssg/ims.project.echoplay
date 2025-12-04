@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <Screen.h>
 #include <SparkFun_Qwiic_Button.h>
 
 // Ein Punkt auf dem 16x16 Pixel Screen;
@@ -10,25 +11,6 @@ typedef struct sPoint
     uint8_t posY;
 } tPoint;
 
-// class um Spiele zu erstellen
-class iGame
-{
-public:
-    virtual void start();
-    virtual void update();
-    virtual void end();
-    virtual ~iGame() {}
-};
-
-// Malt ein das image gleich wie das newImage
-void DrawImage(uint8_t image[16][16], uint8_t newImage[16][16]);
-
-// Macht ein gewähltes Bild zu nur nullen
-void EmptyScreen(uint8_t image[16][16]);
-
-// Macht ein gewoltes Bild in den Buffer und dieser wird auf den Screen gemalt und angezeigt
-void UpdateScreen(uint8_t buffer[256], uint8_t image[16][16]);
-
 // Setzt ein Button Queue zurück
 void ResetButtonQueue(QwiicButton button);
 
@@ -37,6 +19,3 @@ int WaitForButtonPress(QwiicButton leftButton, QwiicButton rightButton);
 
 // Überprüft ob ein Knopfgedrückt ist und aktiviert die LED für den Knopf
 void LEDOnPress(QwiicButton leftButton, QwiicButton rightButton);
-
-// Ein Funktion von der Glyph Library um den jetzigen zustand vom Screen zu malen
-void ImagePrint(const uint8_t image[16][16]);
