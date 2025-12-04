@@ -8,30 +8,10 @@
 
 using namespace HolisticSolutions;
 
-// Allgemeine Statische Variablen für das Spiel deklarieren
-static int difficulty = 1;              // 1 = Easy, 2 = Medium, 3 = Hard
-static bool gameOver = false;           // Variable, die angibt, ob das Spiel vorbei ist
-static unsigned long tempTime[4] = {0}; // Variable deklarieren um eine Temporäre Zeit anzugeben [0](0 = nichts, leftButton = 1, rightButton = 2) [1](Zeit des angegebenen Knopfes) [2/3](2 = right, 3 = left | Variabeln um zu zählen ob es ein Press ist oder Konpf losgelassen)
-
-// Statisch Variablen für die Snake deklarieren
-static int snakeLength = 0;    // Länge der Schlange
-static tPoint snake = {7, 7};  // Position des Schlangenkopfes
-static int snakeDirection = 0; // Richtung der Schlange (0 = oben, 1 = rechts, 2 = unten, 3 = links)
-static int speed = 0;          // Die Geschindigkeit der Snake
-
-// Statische Variablen für den Schlangenschwanz
-static tPoint snakeTail[256] = {0}; // Positionen der Schlangenschwanzpixel.
-
-// Statische Variablen für den Appfel deklarieren
-static tPoint apple = {0}; // Position des Apfels
-
-// Timers for certain events
-static SimpleSoftTimer gameOverTimer(2000);
-
 // Malt den Titelscreen von Snake auf das gewählte Bild
-void SnakeTitleScreen(uint8_t image[16][16])
+void SnakeStrategy::RenderTitleScreen(Screen &screen)
 {
-    uint8_t TitleScreen[16][16] = {
+    static uint8_t TitleScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0},
         {0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0},
@@ -49,11 +29,11 @@ void SnakeTitleScreen(uint8_t image[16][16])
         {0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    DrawImage(image, TitleScreen);
+    screen.drawImage(TitleScreen);
 }
 
 // Wählt mithilfe von difficulty den Richtigen schweirigkeitsscreen
-void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
+void SnakeStrategy::RenderDifficultyScreen(Screen &screen, int difficulty)
 {
     static uint8_t difficultyScreenEinfach[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -73,7 +53,7 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    uint8_t difficultyScreenMittel[16][16] = {
+    static uint8_t difficultyScreenMittel[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
@@ -91,7 +71,7 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    uint8_t difficultyScreenSchwer[16][16] = {
+    static uint8_t difficultyScreenSchwer[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
@@ -111,126 +91,99 @@ void SchweirigskeitScreen(uint8_t image[16][16], int difficulty)
 
     if (difficulty == 1)
     {
-        DrawImage(image, difficultyScreenEinfach);
+        screen.drawImage(difficultyScreenEinfach);
     }
     else if (difficulty == 2)
     {
-        DrawImage(image, difficultyScreenMittel);
+        screen.drawImage(difficultyScreenMittel);
     }
     else if (difficulty == 3)
     {
-        DrawImage(image, difficultyScreenSchwer);
+        screen.drawImage(difficultyScreenSchwer);
     }
 }
 
 // Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
-int ChooseDifficulty(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
-{
-    char button = 0;
-    difficulty = 1;
-    bool difficultyChosen = false;
-
-    while (!difficultyChosen)
-    {
-        SchweirigskeitScreen(image, difficulty);
-        UpdateScreen(buffer, image);
-        button = WaitForButtonPress(leftButton, rightButton);
-
-        if (button == 3)
-        {
-            difficultyChosen = true;
-        }
-
-        if (!difficultyChosen)
-        {
-            Serial.println("Knopf wählen");
-            if (button == 1 && difficulty > 1)
-            {
-                Serial.println("Linker Knopf gedrückt");
-                difficulty--;
-            }
-            else if (button == 2 && difficulty < 3)
-            {
-                Serial.println("Rechter Knopf gedrückt");
-                difficulty++;
-            }
-        }
-    }
-    return difficulty;
-}
+// int Snake::ChooseDifficulty(Screen &screen, QwiicButton leftButton, QwiicButton rightButton)
+// {
+//     char button = 0;
+//     difficulty = 1;
+//     bool difficultyChosen = false;
+//
+//     while (!difficultyChosen)
+//     {
+//         RenderDifficultyScreen(screen, difficulty);
+//         screen.update();
+//         button = WaitForButtonPress(leftButton, rightButton);
+//
+//         if (button == 3)
+//         {
+//             difficultyChosen = true;
+//         }
+//
+//         if (!difficultyChosen)
+//         {
+//             Serial.println("Knopf wählen");
+//             if (button == 1 && difficulty > 1)
+//             {
+//                 Serial.println("Linker Knopf gedrückt");
+//                 difficulty--;
+//             }
+//             else if (button == 2 && difficulty < 3)
+//             {
+//                 Serial.println("Rechter Knopf gedrückt");
+//                 difficulty++;
+//             }
+//         }
+//     }
+//     return difficulty;
+// }
 
 // Malt ein Bild so wie es am Anfang von Snake aussehen sollte
-void SnakeSetup(uint8_t image[16][16], tPoint snake)
+void SnakeStrategy::SnakeSetup(Screen &screen, tPoint snake)
 {
-    EmptyScreen(image);
+    screen.emptyScreen();
 
-    image[snake.posY][snake.posX] = 1;
+    screen.setPixel(snake.posX, snake.posY, 1);
 }
 
 // Ändert die Richtung von der Snake mit der gegebenen geschindigkeit
-void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &snakeDirection, unsigned long tempTime[4])
+void SnakeStrategy::ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &snakeDirection)
 {
     unsigned long leftTime = 0;
     unsigned long rightTime = 0;
 
-    bool validTime = false;
-
-    if (!leftButton.isPressedQueueEmpty() || !rightButton.isPressedQueueEmpty() || tempTime[0] != 0)
+    if (!leftButton.isPressedQueueEmpty() || !rightButton.isPressedQueueEmpty() || leftButtonTime.lastPressTime != 0 || rightButtonTime.lastPressTime != 0)
     {
-        while (!validTime)
+        if (!leftButtonTime.isPress)
         {
-            if (tempTime[0] == 1)
-            {
-                leftTime = tempTime[1];
-                validTime = true;
-            }
-            else if (!leftButton.isPressedQueueEmpty())
-            {
-                leftTime = leftButton.popPressedQueue();
-                if (tempTime[2] > 0)
-                {
-                    leftTime = 0;
-                    tempTime[2] = 0;
-                }
-                else
-                {
-                    validTime = true;
-                    tempTime[2]++;
-                }
-            }
-            else
-            {
-                validTime = true;
-            }
+            leftButton.popPressedQueue();
+            leftButtonTime.isPress = !leftButtonTime.isPress;
+        }
+        if (!rightButtonTime.isPress)
+        {
+            rightButton.popPressedQueue();
+            rightButtonTime.isPress = !rightButtonTime.isPress;
         }
 
-        validTime = false;
-
-        while (!validTime)
+        if (leftButtonTime.lastPressTime != 0)
         {
-            if (tempTime[0] == 2)
-            {
-                rightTime = tempTime[1];
-                validTime = true;
-            }
-            else if (!rightButton.isPressedQueueEmpty())
-            {
-                rightTime = rightButton.popPressedQueue();
-                if (tempTime[3] > 0)
-                {
-                    rightTime = 0;
-                    tempTime[3] = 0;
-                }
-                else
-                {
-                    validTime = true;
-                    tempTime[3]++;
-                }
-            }
-            else
-            {
-                validTime = true;
-            }
+            leftTime = leftButtonTime.lastPressTime;
+        }
+        else if (!leftButton.isPressedQueueEmpty())
+        {
+            leftTime = leftButton.popPressedQueue();
+            leftButtonTime.isPress = !leftButtonTime.isPress;
+        }
+
+        if (rightButtonTime.lastPressTime != 0)
+        {
+            rightTime = rightButtonTime.lastPressTime;
+        }
+        else if (!rightButton.isPressedQueueEmpty())
+        {
+            rightTime = rightButton.popPressedQueue();
+            rightButtonTime.isPress = !rightButtonTime.isPress;
         }
 
         if (leftTime > 0 && rightTime > 0)
@@ -239,15 +192,13 @@ void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &
             {
                 Serial.println("Both not null, left");
                 snakeDirection--;
-                tempTime[0] = 2;
-                tempTime[1] = rightTime;
+                rightButtonTime.lastPressTime = rightTime;
             }
             else if (rightTime < leftTime)
             {
                 Serial.println("Both not null, right");
                 snakeDirection++;
-                tempTime[0] = 1;
-                tempTime[1] = leftTime;
+                leftButtonTime.lastPressTime = leftTime;
             }
         }
         else
@@ -256,22 +207,20 @@ void ChangeSnakeDirection(QwiicButton leftButton, QwiicButton rightButton, int &
             {
                 Serial.println("left null, right");
                 snakeDirection--;
-                tempTime[0] = 0;
-                tempTime[1] = 0;
             }
             else if (rightTime != 0)
             {
                 Serial.println("right null, left");
                 snakeDirection++;
-                tempTime[0] = 0;
-                tempTime[1] = 0;
             }
+            leftButtonTime.lastPressTime = 0;
+            rightButtonTime.lastPressTime = 0;
         }
     }
 }
 
 // Platziert einen Apfel auf einen Gültigen Ort
-void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[256], int snakeLength)
+void SnakeStrategy::PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[256], int snakeLength)
 {
     bool goodApple = false;
 
@@ -301,9 +250,9 @@ void PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[256], int snakeLe
 }
 
 // Löscht den letzten Teil des Schlangenschwanzes und bewegt den Schwanz
-void UpdateSnakeTail(tPoint snake, tPoint snakeTail[256], int snakeLength, uint8_t image[16][16])
+void SnakeStrategy::UpdateSnakeTail(tPoint snake, tPoint snakeTail[256], int snakeLength, Screen &screen)
 {
-    image[snakeTail[snakeLength - 1].posY][snakeTail[snakeLength - 1].posX] = 0;
+    screen.setPixel(snakeTail[snakeLength - 1].posX, snakeTail[snakeLength - 1].posY, 0);
 
     for (int i = snakeLength; 1 < i; i--)
     {
@@ -315,7 +264,7 @@ void UpdateSnakeTail(tPoint snake, tPoint snakeTail[256], int snakeLength, uint8
 }
 
 // Bewegt die Schlange in die gegebene Richtung
-void SnakeMovement(int &snakeDirection, tPoint *snake)
+void SnakeStrategy::MoveSnake(int &snakeDirection, tPoint *snake)
 {
     if (snakeDirection < 0)
     {
@@ -345,7 +294,7 @@ void SnakeMovement(int &snakeDirection, tPoint *snake)
 }
 
 // Überprüft ob die Schlange das Spiel beendet hat
-void CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength, bool &gameOver)
+void SnakeStrategy::CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength)
 {
 
     if (snake->posX < 0 || snake->posX >= 16 || snake->posY < 0 || snake->posY >= 16)
@@ -365,23 +314,23 @@ void CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength, bool &
 }
 
 // Zeichnet den Apfel, den Schlangenkopf und den Schlangenschwanz
-void DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[256], uint8_t image[16][16], uint8_t buffer[256], int snakeLength)
+void SnakeStrategy::DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[256], Screen &screen, int snakeLength)
 {
-    image[snake->posY][snake->posX] = 1;
-    image[apple->posY][apple->posX] = 1;
+    screen.setPixel(snake->posX, snake->posY, 1);
+    screen.setPixel(apple->posX, apple->posY, 1);
 
     for (int i = 0; i < snakeLength; i++)
     {
-        image[snakeTail[i].posY][snakeTail[i].posX] = 1;
+        screen.setPixel(snakeTail[i].posX, snakeTail[i].posY, 1);
     }
 
-    UpdateScreen(buffer, image);
+    screen.update();
 }
 
 // Malt ein Bild so das es Game Over beinhaltet
-void SnakeGameOverScreen(uint8_t image[16][16])
+void SnakeStrategy::RenderGameOverScreen(Screen &screen)
 {
-    uint8_t gameOverScreen[16][16] = {
+    static uint8_t gameOverScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0},
         {0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
@@ -399,13 +348,13 @@ void SnakeGameOverScreen(uint8_t image[16][16])
         {0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    DrawImage(image, gameOverScreen);
+    screen.drawImage(gameOverScreen);
 }
 
 // Malt ein Bild so das es "Again?" auf dem Bild zeigt
-void SnakeStartNewScreen(uint8_t image[16][16])
+void SnakeStrategy::RenderStartNewScreen(Screen &screen)
 {
-    uint8_t startNewScreen[16][16] = {
+    static uint8_t startNewScreen[16][16] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0},
         {0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0},
@@ -423,65 +372,101 @@ void SnakeStartNewScreen(uint8_t image[16][16])
         {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    DrawImage(image, startNewScreen);
+    screen.drawImage(startNewScreen);
 }
 
-// Startet das Spiel Snake
-void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButton, QwiicButton rightButton)
+void SnakeStrategy::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+{
+    dobbleClickTimer.start(150);
+    difficulty = 1;
+    gameState = DIFFICULTY_SETUP;
+    gameOver = false;
+}
+
+void SnakeStrategy::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     // Titelscreen anzeigen
-    SnakeTitleScreen(image);
-    UpdateScreen(buffer, image);
+    RenderTitleScreen(screen);
+    screen.update();
+}
 
-    // Auf einen Input warten
-    WaitForButtonPress(leftButton, rightButton);
-
-    // Schweirigkeitsgrad auswählen
-    difficulty = ChooseDifficulty(image, buffer, leftButton, rightButton);
-
-    // Spiel Variabeln zurücksetzen
-    gameOver = false;
-    snake = {7, 7};
-    snakeLength = 0;
-    snakeDirection = 0;
-    apple = {0};
-    speed = 300 / difficulty;
-    tempTime[4] = {0};
-
-    // Timer für den Moveevent
-    SimpleSoftTimer moveTimer(speed);
-
-    // Button queues leeren
-    ResetButtonQueue(leftButton);
-    ResetButtonQueue(rightButton);
-
-    // Screen für Snake vorbereiten
-    SnakeSetup(image, snake);
-    UpdateScreen(buffer, image);
-
-    // Platziert einen Apfel auf dem Feld
-    PlantApple(&apple, &snake, snakeTail, snakeLength);
-
-    // MoveTimer starten
-    moveTimer.start(speed);
-
-    // Die Haupt Spiel Schleife für Snake
-    while (!gameOver)
+void SnakeStrategy::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+{
+    switch (gameState)
     {
-        // LEDs vom Controller einschalten falls gedrückt
-        LEDOnPress(leftButton, rightButton);
+    case DIFFICULTY_SETUP:
+    {
+        ResetButtonQueue(leftButton);
+        ResetButtonQueue(rightButton);
+        gameState = DIFFICULTY_SELECT;
+        break;
+    }
+    case DIFFICULTY_SELECT:
+    {
+        RenderDifficultyScreen(screen, difficulty);
+        screen.update();
 
-        // Put Red Button Handler here
+        if (dobbleClickTimer.isTimeout())
+        {
+            if (!leftButton.isClickedQueueEmpty() && !rightButton.isClickedQueueEmpty())
+            {
+                Serial.println("doubleklick");
+                gameState = GAME_START;
+            }
+            else if (!leftButton.isClickedQueueEmpty() && difficulty > 1)
+            {
+                Serial.println("Linker Knopf gedrückt");
+                leftButton.popClickedQueue();
+                difficulty--;
+            }
+            else if (!rightButton.isClickedQueueEmpty() && difficulty < 3)
+            {
+                Serial.println("Rechter Knopf gedrückt");
+                rightButton.popClickedQueue();
+                difficulty++;
+            }
+            else
+            {
+                ResetButtonQueue(leftButton);
+                ResetButtonQueue(rightButton);
+            }
+            dobbleClickTimer.restart();
+        }
+        break;
+    }
+    case GAME_START:
+    {
+        gameOver = false;
+        snake = {7, 7};
+        snakeLength = 0;
+        snakeDirection = 0;
+        apple = {0};
+        speed = 300 / difficulty;
 
-        // Put Yellow Button Handler here
+        // MoveTimer starten
+        moveTimer.start(speed);
 
-        // Ändert die Richtung von der Snake
+        // Button queues leeren
+        ResetButtonQueue(leftButton);
+        ResetButtonQueue(rightButton);
+
+        // Screen für Snake vorbereiten
+        SnakeSetup(screen, snake);
+        screen.update();
+
+        // Platziert einen Apfel auf dem Feld
+        PlantApple(&apple, &snake, snakeTail, snakeLength);
+
+        gameState = PLAYING;
+    }
+    case PLAYING:
+    {
         if (moveTimer.isTimeout())
         {
-            ChangeSnakeDirection(leftButton, rightButton, snakeDirection, tempTime);
+            ChangeSnakeDirection(leftButton, rightButton, snakeDirection);
 
             // Alten Schlangenkopf Löschen
-            image[snake.posY][snake.posX] = 0;
+            screen.setPixel(snake.posX, snake.posY, false);
 
             // Überprüfen ob die Schlange einen Apfel berührt und einen neuen erstellen
             if (snake.posX == apple.posX && snake.posY == apple.posY)
@@ -493,33 +478,31 @@ void PlaySnake(uint8_t image[16][16], uint8_t buffer[256], QwiicButton leftButto
             // Schlangenschwanzarray Updaten und hintersten Teil löschen falls es einen hat.
             if (snakeLength > 0)
             {
-                UpdateSnakeTail(snake, snakeTail, snakeLength, image);
+                UpdateSnakeTail(snake, snakeTail, snakeLength, screen);
             }
 
             // Bewegt die Schlange in die gewählt Richtung
-            SnakeMovement(snakeDirection, &snake);
+            MoveSnake(snakeDirection, &snake);
 
             // Überpüft ob die Schlange die Arena verlässt oder ob sie sich selber berührt
-            CheckForGameOver(&snake, snakeTail, snakeLength, gameOver);
+            CheckForGameOver(&snake, snakeTail, snakeLength);
 
             // Malt die Schlange, und den Apfel auf den Screen
-            DrawSnakenApple(&snake, &apple, snakeTail, image, buffer, snakeLength);
+            DrawSnakenApple(&snake, &apple, snakeTail, screen, snakeLength);
 
             moveTimer.restart();
         }
     }
-
-    // Spiel beenden
-    SnakeGameOverScreen(image);
-    UpdateScreen(buffer, image);
-
-    gameOverTimer.start(2000);
-    while (!gameOverTimer.isTimeout() && !rightButton.isPressed() && !leftButton.isPressed())
-    {
-        LEDOnPress(leftButton, rightButton);
-
-        // Put Red Button Handler here
-
-        // Put Yellow Button Handler here
     }
+}
+
+void SnakeStrategy::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+{
+    RenderGameOverScreen(screen);
+    screen.update();
+}
+
+SnakeStrategy::~SnakeStrategy()
+{
+    Serial.print("Was geht 2");
 }
