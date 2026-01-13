@@ -5,6 +5,7 @@
 #include "Car-Jump.h"
 #include <SimpleSoftTimer.h>
 #include <Animation.h>
+#include <vector>
 
 tFrame CarJumpIntroFrames[31] = {
     // Frame 1 (File: pixil-frame-0.png)
@@ -790,17 +791,56 @@ tFrame CarJumpLoopFrames[10]{
         2},
 };
 
+std::vector<uint8_t> groundSprite{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+uint8_t gameOverScreen[16][16] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0},
+    {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
+    {0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0},
+    {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0},
+    {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
+    {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0},
+    {0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+
 Animation CarJumpIntro(CarJumpIntroFrames, 31, false);
 Animation CarJumpLoop(CarJumpLoopFrames, 10, true);
 
-void CarJumpStrategy::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+void CarJump::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     gameOver = false;
+    difficulty = 0;
+    DifficultyIncreaseTimer.start(5000);
+
     CarJumpIntro.Reset();
     CarJumpLoop.Reset();
+
+    for (int i = 0; i < clouds.size(); i++)
+    {
+        clouds[i]->SetMoveTimerWDifficulty(0);
+        clouds[i]->ResetPosition();
+    }
+
+    for (int i = 0; i < Obstacles.size(); i++)
+    {
+        Obstacles[i]->SetMoveTimerWDifficulty(0);
+        Obstacles[i]->ResetPosition();
+    }
+
+    selectedObstacle = rand() % Obstacles.size();
+
+    Player.Start();
 }
 
-void CarJumpStrategy::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+void CarJump::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     if (CarJumpIntro.Render(screen))
     {
@@ -808,23 +848,74 @@ void CarJumpStrategy::start(Screen &screen, QwiicButton &leftButton, QwiicButton
     }
 }
 
-void CarJumpStrategy::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+void CarJump::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.emptyScreen();
-    screen.setPixel(rand() % 16, rand() % 16, true);
-    screen.setPixel(rand() % 16, rand() % 16, true);
-    screen.setPixel(rand() % 16, rand() % 16, true);
-    screen.setPixel(rand() % 16, rand() % 16, true);
+    screen.emptyImage();
+
+    screen.drawSpriteOnImage(0, 15, groundSprite, 16);
+
+    for (int i = 0; i < clouds.size(); i++)
+    {
+        if (clouds[i]->Active == true)
+        {
+            clouds[i]->MoveCloudLeft();
+            clouds[i]->drawCloud(screen);
+        }
+        else
+        {
+            clouds[i]->SetMoveTimerWDifficulty(difficulty);
+            clouds[i]->ResetPosition();
+        }
+    }
+
+    if (Obstacles[selectedObstacle]->Active == true)
+    {
+        Obstacles[selectedObstacle]->MoveObstacleLeft();
+        Obstacles[selectedObstacle]->DrawObstacle(screen);
+        if (ObstacleSpawnWaiting)
+        {
+            ObstacleSpawnWaiting = false;
+        }
+    }
+    else
+    {
+        if (!ObstacleSpawnWaiting)
+        {
+            ObstacleSpawnTimer.start((rand() % 1501) + 500);
+            ObstacleSpawnWaiting = true;
+        }
+        else if (ObstacleSpawnTimer.isTimeout())
+        {
+            selectedObstacle = rand() % Obstacles.size();
+            Obstacles[selectedObstacle]->SetMoveTimerWDifficulty(difficulty);
+            Obstacles[selectedObstacle]->ResetPosition();
+            ObstacleSpawnWaiting = false;
+        }
+    }
+
+    Player.Jump(leftButton);
+
+    Player.Duck(rightButton);
+
+    Player.Draw(screen);
+
     screen.update();
-    if (leftButton.hasBeenClicked())
+
+    if (DifficultyIncreaseTimer.isTimeout() && difficulty < 30)
+    {
+        difficulty++;
+        DifficultyIncreaseTimer.restart();
+    }
+
+    if (Obstacles[selectedObstacle]->CheckPixelCollision(Player.GetPositionX(), Player.GetPositionY(), Player.GetSprite(), Player.GetWidth()))
     {
         gameOver = true;
     }
 }
 
-void CarJumpStrategy::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
+void CarJump::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.emptyScreen();
-    screen.setPixel(15, 15, true);
+    screen.emptyImage();
+    screen.drawImage(gameOverScreen);
     screen.update();
 }
