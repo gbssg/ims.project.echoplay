@@ -27,7 +27,7 @@ void Screen::drawImage(uint8_t newImage[16][16])
 }
 
 // Macht ein gewähltes Bild zu nur nullen
-void Screen::emptyScreen()
+void Screen::emptyImage()
 {
     for (uint8_t i = 0; i < 16; i++)
     {
@@ -75,4 +75,28 @@ void Screen::imagePrint()
 void Screen::setPixel(int x, int y, bool lightOn)
 {
     _image[y][x] = lightOn ? 1 : 0;
+}
+
+void Screen::drawSpriteOnImage(int x, int y, std::vector<uint8_t> sprite, int width)
+{
+    if (width <= 0)
+        return;
+    int height = (int)sprite.size() / width;
+
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            if (sprite[i * width + j] == 1)
+            {
+                int pixelX = x + j;
+                int pixelY = y + i;
+
+                if ((pixelX >= 0 && pixelY >= 0) && (pixelX <= 15 && pixelY <= 15))
+                {
+                    setPixel(pixelX, pixelY, true);
+                }
+            }
+        }
+    }
 }
