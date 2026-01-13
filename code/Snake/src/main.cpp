@@ -1,16 +1,18 @@
 #include <Arduino.h>
 #include <SparkFun_Qwiic_Button.h>
 #include <Wire.h>
-#include <IGame.h>
+#include <IProgramm.h>
 #include <Snake.h>
 #include <LedWallEncoder.h>
 #include <LEDWallDriver.h>
-#include <Glyph.h>
 #include <SimpleSoftTimer.h>
 #include <EchoPlay.h>
 #include <EchoButton.h>
 #include <Screen.h>
 #include <Car-Jump.h>
+#include <WifiConnection.h>
+#include <Clock.h>
+#include <IGame.h>
 
 using namespace HolisticSolutions;
 
@@ -25,33 +27,39 @@ const char pin_SW2 = GPIO_NUM_32; // Optional, falls man den Roten Knopf verwend
 
 enum state
 {
-  GAME_SETUP,
+  PROGRAMM_SETUP,
+  PROGRAMM_UPDATE,
+
   GAME_START,
   GAME_UPDATE,
   GAME_END
 };
 
+bool screenIsOn = true;
+
 state programmState;
 
-QwiicButton leftButton;  // linken Knopf initialisieren
-QwiicButton rightButton; // Rechten Knipf initialisieren
+QwiicButton leftButton;
+QwiicButton rightButton;
 
 EchoButton yellowButton(pin_SW1, true);
 EchoButton redButton(pin_SW2, true);
 
-// Gamechooser object
+// chooser objects
 IGame *selectedGame;
+IProgramm *selectedProgramm;
 
 // Selected Game in The Array
-int selectedGameNumber = 0;
+int selectedProgrammNumber = 0;
 
-// Array with all games
-IGame *games[] = {
-    new SnakeStrategy(),
-    new CarJumpStrategy()};
+// Array with all programms
+IProgramm *programms[] = {
+    new Snake(),
+    new CarJump(),
+    new Clock()};
 
 // Amount of games in games Array
-int gameAmount = sizeof(games) / sizeof(games[0]);
+int gameAmount = sizeof(programms) / sizeof(programms[0]);
 
 // TranslationTable für den Screen
 uint8_t TranslationTable[16][16] = {
@@ -90,13 +98,10 @@ void PreparePins()
 
 void setup()
 {
+  Wire.begin();
+  Serial.begin(115200);
+
   PreparePins();
-
-  echoScreen.emptyBuffer();
-  echoScreen.update();
-
-  Wire.begin();         // I2C-Bus initialisieren
-  Serial.begin(115200); // Serielle Kommunikation initialisieren
 
   //  Überprüfen ob der Linke Knopf gefunden wurde, wenn ja starten, sonst Fehlermeldung
   if (leftButton.begin(0x11) == false)
@@ -115,6 +120,11 @@ void setup()
   }
   Serial.println("Right button acknowledged.");
 
+  connectWifi();
+
+  echoScreen.emptyBuffer();
+  echoScreen.update();
+
   leftButton.clearEventBits();
   rightButton.clearEventBits();
 
@@ -123,84 +133,127 @@ void setup()
   rightButton.enablePressedInterrupt();
   rightButton.enableClickedInterrupt();
 
-  selectedGame = games[selectedGameNumber];
+  selectedProgramm = programms[selectedProgrammNumber];
+  if (selectedProgramm->isGame())
+    selectedGame = static_cast<IGame *>(selectedProgramm);
+  else
+    selectedGame = nullptr;
 
-  programmState = GAME_SETUP;
+  programmState = PROGRAMM_SETUP;
 }
 
 void loop()
 {
   LEDOnPress(leftButton, rightButton);
 
-  if (yellowButton.isPressed() && yellowButton.hasBeenReleased)
+  if (redButton.isPressed() && redButton.hasBeenReleased)
   {
-    selectedGameNumber++;
-    if (selectedGameNumber > gameAmount - 1)
+    screenIsOn = !screenIsOn;
+    redButton.hasBeenReleased = false;
+  }
+  else if (!redButton.isPressed())
+  {
+    redButton.hasBeenReleased = true;
+  }
+
+  if (screenIsOn)
+  {
+    if (yellowButton.isPressed() && yellowButton.hasBeenReleased)
     {
-      selectedGameNumber = 0;
-    }
-    selectedGame = games[selectedGameNumber];
+      selectedProgrammNumber++;
+      if (selectedProgrammNumber > gameAmount - 1)
+      {
+        selectedProgrammNumber = 0;
+      }
+      selectedProgramm = programms[selectedProgrammNumber];
 
-    programmState = GAME_SETUP;
-    leftButton.clearEventBits();
-    rightButton.clearEventBits();
-    ResetButtonQueue(leftButton);
-    ResetButtonQueue(rightButton);
+      if (selectedProgramm->isGame())
+        selectedGame = static_cast<IGame *>(selectedProgramm);
+      else
+        selectedGame = nullptr;
 
-    yellowButton.hasBeenReleased = false;
-  }
-  else if (!yellowButton.isPressed())
-  {
-    yellowButton.hasBeenReleased = true;
-  }
-
-  switch (programmState)
-  {
-  case GAME_SETUP:
-  {
-    selectedGame->setup(echoScreen, leftButton, rightButton);
-    programmState = GAME_START;
-  }
-  case GAME_START:
-  {
-    Serial.println("start");
-    selectedGame->start(echoScreen, leftButton, rightButton);
-
-    if (leftButton.hasBeenClicked() || rightButton.hasBeenClicked())
-    {
-      programmState = GAME_UPDATE;
-      leftButton.clearEventBits();
-      rightButton.clearEventBits();
-    }
-    break;
-  }
-  case GAME_UPDATE:
-  {
-    Serial.println("update");
-    selectedGame->update(echoScreen, leftButton, rightButton);
-
-    if (selectedGame->isGameOver())
-    {
-      leftButton.clearEventBits();
-      rightButton.clearEventBits();
-
-      programmState = GAME_END;
-    }
-    break;
-  }
-  case GAME_END:
-  {
-    Serial.println("end");
-    selectedGame->end(echoScreen, leftButton, rightButton);
-
-    if (leftButton.hasBeenClicked() || rightButton.hasBeenClicked())
-    {
-      programmState = GAME_SETUP;
+      programmState = PROGRAMM_SETUP;
 
       leftButton.clearEventBits();
       rightButton.clearEventBits();
+      ResetButtonQueue(leftButton);
+      ResetButtonQueue(rightButton);
+
+      yellowButton.hasBeenReleased = false;
     }
-    break;
+    else if (!yellowButton.isPressed())
+    {
+      yellowButton.hasBeenReleased = true;
+    }
+
+    switch (programmState)
+    {
+    case PROGRAMM_SETUP:
+    {
+      selectedProgramm->setup(echoScreen, leftButton, rightButton);
+
+      if (selectedGame)
+      {
+        programmState = GAME_START;
+      }
+      else
+      {
+        programmState = PROGRAMM_UPDATE;
+      }
+
+      break;
+    }
+    case PROGRAMM_UPDATE:
+    {
+      selectedProgramm->update(echoScreen, leftButton, rightButton);
+      break;
+    }
+    case GAME_START:
+    {
+      selectedGame->start(echoScreen, leftButton, rightButton);
+
+      if (leftButton.hasBeenClicked() || rightButton.hasBeenClicked())
+      {
+        programmState = GAME_UPDATE;
+        leftButton.clearEventBits();
+        rightButton.clearEventBits();
+      }
+      break;
+    }
+    case GAME_UPDATE:
+    {
+      selectedGame->update(echoScreen, leftButton, rightButton);
+
+      if (selectedGame->isGameOver())
+      {
+        leftButton.clearEventBits();
+        rightButton.clearEventBits();
+
+        programmState = GAME_END;
+      }
+      break;
+    }
+    case GAME_END:
+    {
+      selectedGame->end(echoScreen, leftButton, rightButton);
+
+      if (leftButton.hasBeenClicked() || rightButton.hasBeenClicked())
+      {
+        programmState = PROGRAMM_SETUP;
+
+        leftButton.clearEventBits();
+        rightButton.clearEventBits();
+      }
+      break;
+    }
+    }
   }
+  else
+  {
+    programmState = PROGRAMM_SETUP;
+
+    echoScreen.emptyImage();
+
+    echoScreen.update();
   }
 }
