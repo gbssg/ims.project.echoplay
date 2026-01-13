@@ -7,8 +7,8 @@
 // Ein Punkt auf dem 16x16 Pixel Screen;
 typedef struct sPoint
 {
-    uint8_t posX;
-    uint8_t posY;
+    int posX;
+    int posY;
 } tPoint;
 
 // Setzt ein Button Queue zurück
