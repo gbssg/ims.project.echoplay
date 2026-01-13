@@ -9,7 +9,7 @@
 
 using namespace HolisticSolutions;
 
-class SnakeStrategy : public IGame
+class Snake : public IGame
 {
 private:
     // Allgemeine Variablen für das Spiel deklarieren
@@ -98,5 +98,5 @@ public:
 
     void end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton);
 
-    ~SnakeStrategy();
+    ~Snake();
 };
