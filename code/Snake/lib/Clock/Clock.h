@@ -23,10 +23,18 @@ private:
 
     int numberWidth = 6;
 
+    enum state
+    {
+        SHOW_TIME,
+        SHOW_DATE
+    };
+
+    state ClockState;
+
     tPoint TopLeftPos{1, 0};
     tPoint TopRightPos{8, 0};
-    tPoint BottomLeftPos{2, 9};
-    tPoint BottomRightPos{9, 9};
+    tPoint BottomLeftPos{1, 9};
+    tPoint BottomRightPos{8, 9};
 
 public:
     void setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton);
