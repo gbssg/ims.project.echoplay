@@ -13,6 +13,7 @@
 #include <WifiConnection.h>
 #include <Clock.h>
 #include <IGame.h>
+#include <Arkanoid.h>
 
 using namespace HolisticSolutions;
 
@@ -27,15 +28,19 @@ const char pin_SW2 = GPIO_NUM_32; // Optional, falls man den Roten Knopf verwend
 
 enum state
 {
+  PROGRAMM_SELECTION,
+
   PROGRAMM_SETUP,
   PROGRAMM_UPDATE,
 
+  GAME_SETUP,
   GAME_START,
   GAME_UPDATE,
   GAME_END
 };
 
 bool screenIsOn = true;
+bool lastScreenState = true;
 
 state programmState;
 
@@ -45,21 +50,22 @@ QwiicButton rightButton;
 EchoButton yellowButton(pin_SW1, true);
 EchoButton redButton(pin_SW2, true);
 
-// chooser objects
+// chooser Objekte
 IGame *selectedGame;
 IProgramm *selectedProgramm;
 
-// Selected Game in The Array
+// Ausgewähltes Spiel im Array
 int selectedProgrammNumber = 0;
 
-// Array with all programms
+// Array mit allen Programmen
 IProgramm *programms[] = {
     new Snake(),
     new CarJump(),
-    new Clock()};
+    new Clock(),
+    new Arkanoid()};
 
-// Amount of games in games Array
-int gameAmount = sizeof(programms) / sizeof(programms[0]);
+// Anzahl Programme im Array
+int programmAmount = sizeof(programms) / sizeof(programms[0]);
 
 // TranslationTable für den Screen
 uint8_t TranslationTable[16][16] = {
@@ -83,7 +89,7 @@ uint8_t TranslationTable[16][16] = {
 
 Screen echoScreen(TranslationTable);
 
-// prepares GPIO's for further instructions
+// Pins vorbereiten
 void PreparePins()
 {
   pinMode(pin_enable, OUTPUT);
@@ -139,7 +145,7 @@ void setup()
   else
     selectedGame = nullptr;
 
-  programmState = PROGRAMM_SETUP;
+  programmState = PROGRAMM_SELECTION;
 }
 
 void loop()
@@ -161,7 +167,7 @@ void loop()
     if (yellowButton.isPressed() && yellowButton.hasBeenReleased)
     {
       selectedProgrammNumber++;
-      if (selectedProgrammNumber > gameAmount - 1)
+      if (selectedProgrammNumber > programmAmount - 1)
       {
         selectedProgrammNumber = 0;
       }
@@ -172,7 +178,7 @@ void loop()
       else
         selectedGame = nullptr;
 
-      programmState = PROGRAMM_SETUP;
+      programmState = PROGRAMM_SELECTION;
 
       leftButton.clearEventBits();
       rightButton.clearEventBits();
@@ -188,13 +194,11 @@ void loop()
 
     switch (programmState)
     {
-    case PROGRAMM_SETUP:
+    case PROGRAMM_SELECTION:
     {
-      selectedProgramm->setup(echoScreen, leftButton, rightButton);
-
       if (selectedGame)
       {
-        programmState = GAME_START;
+        programmState = GAME_SETUP;
       }
       else
       {
@@ -203,9 +207,22 @@ void loop()
 
       break;
     }
+    case PROGRAMM_SETUP:
+    {
+      selectedProgramm->setup(echoScreen, leftButton, rightButton);
+      programmState = PROGRAMM_UPDATE;
+      break;
+    }
     case PROGRAMM_UPDATE:
     {
       selectedProgramm->update(echoScreen, leftButton, rightButton);
+      break;
+    }
+    case GAME_SETUP:
+    {
+      selectedGame->setup(echoScreen, leftButton, rightButton);
+
+      programmState = GAME_START;
       break;
     }
     case GAME_START:
@@ -239,7 +256,7 @@ void loop()
 
       if (leftButton.hasBeenClicked() || rightButton.hasBeenClicked())
       {
-        programmState = PROGRAMM_SETUP;
+        programmState = GAME_SETUP;
 
         leftButton.clearEventBits();
         rightButton.clearEventBits();
@@ -250,10 +267,15 @@ void loop()
   }
   else
   {
-    programmState = PROGRAMM_SETUP;
+    if (lastScreenState == true)
+    {
+      programmState = PROGRAMM_SELECTION;
 
-    echoScreen.emptyImage();
+      echoScreen.emptyImage();
 
-    echoScreen.update();
+      echoScreen.update();
+    }
   }
+
+  lastScreenState = screenIsOn;
 }
