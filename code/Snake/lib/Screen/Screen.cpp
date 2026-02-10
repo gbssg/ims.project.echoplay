@@ -26,7 +26,7 @@ void Screen::drawImage(uint8_t newImage[16][16])
     }
 }
 
-// Macht ein gewähltes Bild zu nur nullen
+// Macht Bild zu nur nullen
 void Screen::emptyImage()
 {
     for (uint8_t i = 0; i < 16; i++)
