@@ -11,6 +11,12 @@ typedef struct sPoint
     int posY;
 } tPoint;
 
+typedef struct sVelocity
+{
+    int xVel;
+    int yVel;
+} tVelocity;
+
 // Setzt ein Button Queue zurück
 void ResetButtonQueue(QwiicButton button);
 
