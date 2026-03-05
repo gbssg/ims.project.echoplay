@@ -109,22 +109,31 @@ void setup()
 
   PreparePins();
 
-  //  Überprüfen ob der Linke Knopf gefunden wurde, wenn ja starten, sonst Fehlermeldung
-  if (leftButton.begin(0x11) == false)
+  if (leftButton.begin(0x0C, Wire) == false)
   {
-    Serial.println("Left Button did not acknowledge! Freezing.");
-    while (1)
-      ;
+    Serial.print("Left Button is Connected: ");
+    Serial.println(leftButton.isConnected());
+
+    Serial.print("Left Button has same Adress: ");
+    Serial.println(leftButton.checkDeviceID());
   }
-  Serial.println("Left button acknowledged.");
-  //  Überprüfen ob der Rechte Knopf gefunden wurde, wenn ja starten, sonst Fehlermeldung
-  if (rightButton.begin(0x10) == false)
+  else
   {
-    Serial.println("Right Button did not acknowledge! Freezing.");
-    while (1)
-      ;
+    Serial.println("Left Button is ready!");
   }
-  Serial.println("Right button acknowledged.");
+
+  if (rightButton.begin(0x10, Wire) == false)
+  {
+    Serial.print("Right Button is Connected: ");
+    Serial.println(rightButton.isConnected());
+
+    Serial.print("right Button has same Adress: ");
+    Serial.println(rightButton.checkDeviceID());
+  }
+  else
+  {
+    Serial.println("Right Button is ready!");
+  }
 
   connectWifi();
 
