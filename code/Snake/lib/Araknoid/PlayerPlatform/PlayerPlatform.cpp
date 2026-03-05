@@ -22,7 +22,7 @@ void PlayerPlatform::MovePlatform(bool moveLeft)
                 PlatformPos.posX++;
             }
         }
-        moveTimer.start(100);
+        moveTimer.start(moveTime);
     }
 }
 
@@ -30,6 +30,14 @@ void PlayerPlatform::SetPosition(int x, int y)
 {
     PlatformPos.posX = x;
     PlatformPos.posY = y;
+}
+
+void PlayerPlatform::SetMoveTimer(int newTime)
+{
+    if (newTime > 0)
+    {
+        moveTime = newTime;
+    }
 }
 
 int PlayerPlatform::GetPosition(Coordinate position)
