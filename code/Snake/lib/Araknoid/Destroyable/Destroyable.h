@@ -18,6 +18,11 @@ private:
 public:
     Destroyable(std::vector<uint8_t> newSprite, int width);
     void SetPosition(int x, int y);
-    std::vector<uint8_t>
-    GetSprite();
+    std::vector<uint8_t> GetSprite();
+    int GetWidth();
+    int GetPosition(Coordinate position);
+    int GetHeight();
+    bool IsDestroyed();
+    void Destroy();
+    void Contruct();
 };
