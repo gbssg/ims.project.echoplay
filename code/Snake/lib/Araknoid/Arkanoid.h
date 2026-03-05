@@ -16,29 +16,30 @@ using namespace HolisticSolutions;
 class Arkanoid : public IGame
 {
 private:
-    PlayerPlatform ArkanoidPlatform{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 16};
+    std::vector<uint8_t> PlatformSprite = {1, 1, 1, 1, 1, 1};
+    int PlatformWidth = 6;
+    int PlatformMoveTime = 50;
+
+    PlayerPlatform ArkanoidPlatform{PlatformSprite, PlatformWidth};
     int Speed = 20;
 
-    std::vector<Ball> Balls = {
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball()};
+    std::vector<Ball> Balls;
 
-    Destroyable Object1{{1, 1, 1, 1}, 4};
+    int MaxBalls = 15;
+    int BallAmount = 5;
 
-    std::vector<Destroyable *> Destroyables{
-        &Object1};
+    std::vector<uint8_t> DestroyableSprite = {1, 1};
+    int DestroyableWidth = 2;
+
+    int DestroyablesPerRow = 7;
+    int DestroyablesPreCollumn = 7;
+
+    int MaxDestroyables = 49;
+    int DestroyableAmount = 49;
+
+    std::vector<Destroyable> Destroyables;
+
+    bool PlayerWon = false;
 
 public:
     void setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton);
