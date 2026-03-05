@@ -4,6 +4,7 @@
 #include <SimpleSoftTimer.h>
 #include "../PlayerPlatform/PlayerPlatform.h"
 #include "../SharedEnums.h"
+#include "../Destroyable/Destroyable.h"
 
 using namespace HolisticSolutions;
 
@@ -24,6 +25,8 @@ private:
     SimpleSoftTimer xMoveTimer{1000};
     SimpleSoftTimer yMoveTimer{1000};
 
+    bool active = false;
+
 public:
     void SetPrevPosition();
     void SetPrevPosition(int x, int y);
@@ -38,4 +41,7 @@ public:
     int GetPosition(Coordinate position);
     bool MovingLeft();
     float GetVelocity(Coordinate position);
+    void HandleBlockBounce(Destroyable block);
+    void Construct();
+    void Destroy();
 };

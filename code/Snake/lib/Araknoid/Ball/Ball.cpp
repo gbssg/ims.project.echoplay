@@ -83,16 +83,17 @@ void Ball::StartMoving()
 
 void Ball::Bounce(WallPos pos)
 {
-    Serial.println("BOUNCE");
     switch (pos)
     {
     case TOPBOT:
     {
+        Serial.println("BOUNCE TOPBOT");
         BallVelocity.yVel *= -1;
         break;
     }
     case SIDE:
     {
+        Serial.println("BOUNCE SIDE");
         BallVelocity.xVel *= -1;
         break;
     }
@@ -176,4 +177,37 @@ float Ball::GetVelocity(Coordinate position)
         break;
     }
     }
+}
+
+void Ball::HandleBlockBounce(Destroyable block)
+{
+    SetPosition(PrevBallPos.posX, PrevBallPos.posY);
+
+    int blockX = block.GetPosition(XPOS);
+    int blockY = block.GetPosition(YPOS);
+    int blockWidth = block.GetWidth();
+    int blockHeight = block.GetHeight();
+
+    int ballX = BallPos.posX;
+    int ballY = BallPos.posY;
+
+    if (ballX < blockX || ballX > blockX + blockWidth - 1)
+    {
+        Bounce(SIDE);
+    }
+
+    if (ballY < blockY || ballY > blockY + blockHeight - 1)
+    {
+        Bounce(TOPBOT);
+    }
+}
+
+void Ball::Construct()
+{
+    active = true;
+}
+
+void Ball::Destroy()
+{
+    active = false;
 }
