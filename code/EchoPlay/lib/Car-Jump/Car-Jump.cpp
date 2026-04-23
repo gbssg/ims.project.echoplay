@@ -850,9 +850,9 @@ void CarJump::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightB
 
 void CarJump::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.emptyImage();
+    screen.EmptyImage();
 
-    screen.drawSpriteOnImage(0, 15, groundSprite, 16);
+    screen.DrawSpriteOnImage(0, 15, groundSprite, 16);
 
     for (int i = 0; i < clouds.size(); i++)
     {
@@ -899,7 +899,7 @@ void CarJump::update(Screen &screen, QwiicButton &leftButton, QwiicButton &right
 
     Player.Draw(screen);
 
-    screen.update();
+    screen.Update();
 
     if (DifficultyIncreaseTimer.isTimeout() && difficulty < 30)
     {
@@ -915,7 +915,7 @@ void CarJump::update(Screen &screen, QwiicButton &leftButton, QwiicButton &right
 
 void CarJump::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.emptyImage();
-    screen.drawImage(gameOverScreen);
-    screen.update();
+    screen.EmptyImage();
+    screen.DrawImage(gameOverScreen);
+    screen.Update();
 }

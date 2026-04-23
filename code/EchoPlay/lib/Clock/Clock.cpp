@@ -103,7 +103,7 @@ void Clock::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
 {
     timeClient.update();
 
-    screen.emptyImage();
+    screen.EmptyImage();
 
     if (leftButton.hasBeenClicked() && ClockState == SHOW_TIME)
     {
@@ -120,7 +120,6 @@ void Clock::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
     {
     case SHOW_TIME:
     {
-        Serial.println("SHOW TIME");
         int hour = timeClient.getHours();
         int minute = timeClient.getMinutes();
         int second = timeClient.getSeconds();
@@ -150,12 +149,12 @@ void Clock::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
             yOffsetBottom = 0;
         }
 
-        screen.drawSpriteOnImage(TopLeftPos.posX, TopLeftPos.posY + yOffsetTop, numberSprites[hour / 10], numberWidth);
-        screen.drawSpriteOnImage(TopRightPos.posX, TopRightPos.posY + yOffsetTop, numberSprites[hour % 10], numberWidth);
-        screen.drawSpriteOnImage(BottomLeftPos.posX, BottomLeftPos.posY + yOffsetBottom, numberSprites[minute / 10], numberWidth);
-        screen.drawSpriteOnImage(BottomRightPos.posX, BottomRightPos.posY + yOffsetBottom, numberSprites[minute % 10], numberWidth);
+        screen.DrawSpriteOnImage(TopLeftPos.posX, TopLeftPos.posY + yOffsetTop, numberSprites[hour / 10], numberWidth);
+        screen.DrawSpriteOnImage(TopRightPos.posX, TopRightPos.posY + yOffsetTop, numberSprites[hour % 10], numberWidth);
+        screen.DrawSpriteOnImage(BottomLeftPos.posX, BottomLeftPos.posY + yOffsetBottom, numberSprites[minute / 10], numberWidth);
+        screen.DrawSpriteOnImage(BottomRightPos.posX, BottomRightPos.posY + yOffsetBottom, numberSprites[minute % 10], numberWidth);
 
-        screen.setPixel(x, y, 1);
+        screen.SetPixel(x, y, 1);
 
         break;
     }
@@ -169,14 +168,14 @@ void Clock::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
         int month = (dayDate[5] - '0') * 10 + (dayDate[6] - '0');
         int day = (dayDate[8] - '0') * 10 + (dayDate[9] - '0');
 
-        screen.drawSpriteOnImage(TopLeftPos.posX, TopLeftPos.posY, numberSprites[day / 10], numberWidth);
-        screen.drawSpriteOnImage(TopRightPos.posX, TopRightPos.posY, numberSprites[day % 10], numberWidth);
-        screen.drawSpriteOnImage(BottomLeftPos.posX, BottomLeftPos.posY, numberSprites[month / 10], numberWidth);
-        screen.drawSpriteOnImage(BottomRightPos.posX, BottomRightPos.posY, numberSprites[month % 10], numberWidth);
+        screen.DrawSpriteOnImage(TopLeftPos.posX, TopLeftPos.posY, numberSprites[day / 10], numberWidth);
+        screen.DrawSpriteOnImage(TopRightPos.posX, TopRightPos.posY, numberSprites[day % 10], numberWidth);
+        screen.DrawSpriteOnImage(BottomLeftPos.posX, BottomLeftPos.posY, numberSprites[month / 10], numberWidth);
+        screen.DrawSpriteOnImage(BottomRightPos.posX, BottomRightPos.posY, numberSprites[month % 10], numberWidth);
 
         break;
     }
     }
 
-    screen.update();
+    screen.Update();
 }

@@ -29,7 +29,7 @@ void Snake::RenderTitleScreen(Screen &screen)
         {0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    screen.drawImage(TitleScreen);
+    screen.DrawImage(TitleScreen);
 }
 
 // Wählt mithilfe von difficulty den Richtigen schweirigkeitsscreen
@@ -91,60 +91,24 @@ void Snake::RenderDifficultyScreen(Screen &screen, int difficulty)
 
     if (difficulty == 1)
     {
-        screen.drawImage(difficultyScreenEinfach);
+        screen.DrawImage(difficultyScreenEinfach);
     }
     else if (difficulty == 2)
     {
-        screen.drawImage(difficultyScreenMittel);
+        screen.DrawImage(difficultyScreenMittel);
     }
     else if (difficulty == 3)
     {
-        screen.drawImage(difficultyScreenSchwer);
+        screen.DrawImage(difficultyScreenSchwer);
     }
 }
-
-// Zeigt ein Menü auf dem Bildschirm um die Schiwerigkeit zu wählen und gibt diesen dann zurück
-// int Snake::ChooseDifficulty(Screen &screen, QwiicButton leftButton, QwiicButton rightButton)
-// {
-//     char button = 0;
-//     difficulty = 1;
-//     bool difficultyChosen = false;
-//
-//     while (!difficultyChosen)
-//     {
-//         RenderDifficultyScreen(screen, difficulty);
-//         screen.update();
-//         button = WaitForButtonPress(leftButton, rightButton);
-//
-//         if (button == 3)
-//         {
-//             difficultyChosen = true;
-//         }
-//
-//         if (!difficultyChosen)
-//         {
-//             Serial.println("Knopf wählen");
-//             if (button == 1 && difficulty > 1)
-//             {
-//                 Serial.println("Linker Knopf gedrückt");
-//                 difficulty--;
-//             }
-//             else if (button == 2 && difficulty < 3)
-//             {
-//                 Serial.println("Rechter Knopf gedrückt");
-//                 difficulty++;
-//             }
-//         }
-//     }
-//     return difficulty;
-// }
 
 // Malt ein Bild so wie es am Anfang von Snake aussehen sollte
 void Snake::SnakeSetup(Screen &screen, tPoint snake)
 {
-    screen.emptyImage();
+    screen.EmptyImage();
 
-    screen.setPixel(snake.posX, snake.posY, 1);
+    screen.SetPixel(snake.posX, snake.posY, 1);
 }
 
 // Ändert die Richtung von der Snake mit der gegebenen geschindigkeit
@@ -252,7 +216,7 @@ void Snake::PlantApple(tPoint *apple, tPoint *snake, tPoint snakeTail[256], int 
 // Löscht den letzten Teil des Schlangenschwanzes und bewegt den Schwanz
 void Snake::UpdateSnakeTail(tPoint snake, tPoint snakeTail[256], int snakeLength, Screen &screen)
 {
-    screen.setPixel(snakeTail[snakeLength - 1].posX, snakeTail[snakeLength - 1].posY, 0);
+    screen.SetPixel(snakeTail[snakeLength - 1].posX, snakeTail[snakeLength - 1].posY, 0);
 
     for (int i = snakeLength; 1 < i; i--)
     {
@@ -316,15 +280,15 @@ void Snake::CheckForGameOver(tPoint *snake, tPoint snakeTail[], int snakeLength)
 // Zeichnet den Apfel, den Schlangenkopf und den Schlangenschwanz
 void Snake::DrawSnakenApple(tPoint *snake, tPoint *apple, tPoint snakeTail[256], Screen &screen, int snakeLength)
 {
-    screen.setPixel(snake->posX, snake->posY, 1);
-    screen.setPixel(apple->posX, apple->posY, 1);
+    screen.SetPixel(snake->posX, snake->posY, 1);
+    screen.SetPixel(apple->posX, apple->posY, 1);
 
     for (int i = 0; i < snakeLength; i++)
     {
-        screen.setPixel(snakeTail[i].posX, snakeTail[i].posY, 1);
+        screen.SetPixel(snakeTail[i].posX, snakeTail[i].posY, 1);
     }
 
-    screen.update();
+    screen.Update();
 }
 
 // Malt ein Bild so das es Game Over beinhaltet
@@ -348,7 +312,7 @@ void Snake::RenderGameOverScreen(Screen &screen)
         {0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    screen.drawImage(gameOverScreen);
+    screen.DrawImage(gameOverScreen);
 }
 
 // Malt ein Bild so das es "Again?" auf dem Bild zeigt
@@ -372,7 +336,7 @@ void Snake::RenderStartNewScreen(Screen &screen)
         {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    screen.drawImage(startNewScreen);
+    screen.DrawImage(startNewScreen);
 }
 
 void Snake::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
@@ -387,7 +351,7 @@ void Snake::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBut
 {
     // Titelscreen anzeigen
     RenderTitleScreen(screen);
-    screen.update();
+    screen.Update();
 }
 
 void Snake::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
@@ -404,7 +368,7 @@ void Snake::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
     case DIFFICULTY_SELECT:
     {
         RenderDifficultyScreen(screen, difficulty);
-        screen.update();
+        screen.Update();
 
         if (dobbleClickTimer.isTimeout())
         {
@@ -452,7 +416,7 @@ void Snake::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
 
         // Screen für Snake vorbereiten
         SnakeSetup(screen, snake);
-        screen.update();
+        screen.Update();
 
         // Platziert einen Apfel auf dem Feld
         PlantApple(&apple, &snake, snakeTail, snakeLength);
@@ -466,7 +430,7 @@ void Snake::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
             ChangeSnakeDirection(leftButton, rightButton, snakeDirection);
 
             // Alten Schlangenkopf Löschen
-            screen.setPixel(snake.posX, snake.posY, false);
+            screen.SetPixel(snake.posX, snake.posY, false);
 
             // Überprüfen ob die Schlange einen Apfel berührt und einen neuen erstellen
             if (snake.posX == apple.posX && snake.posY == apple.posY)
@@ -499,5 +463,5 @@ void Snake::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightBu
 void Snake::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     RenderGameOverScreen(screen);
-    screen.update();
+    screen.Update();
 }

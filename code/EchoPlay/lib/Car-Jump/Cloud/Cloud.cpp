@@ -56,5 +56,5 @@ void Cloud::MoveCloudLeft()
 
 void Cloud::drawCloud(Screen &screen)
 {
-    screen.drawSpriteOnImage(CloudPos.posX, CloudPos.posY, CloudSprite, Width);
+    screen.DrawSpriteOnImage(CloudPos.posX, CloudPos.posY, CloudSprite, Width);
 }

@@ -3,60 +3,60 @@
 #include <LEDWallDriver.h>
 
 // Konstruktor der Screen Klasse
-Screen::Screen(uint8_t translationTable[16][16])
+Screen::Screen(uint8_t newTranslationTable[16][16])
 {
-    for (uint8_t i = 0; i < 16; i++)
+    for (int i = 0; i < 16; i++)
     {
-        for (uint8_t j = 0; j < 16; j++)
+        for (int j = 0; j < 16; j++)
         {
-            _translationTable[i][j] = translationTable[i][j];
+            translationTable[i][j] = newTranslationTable[i][j];
         }
     }
 }
 
 // Malt ein das image gleich wie das newImage
-void Screen::drawImage(uint8_t newImage[16][16])
+void Screen::DrawImage(uint8_t newImage[16][16])
 {
-    for (uint8_t i = 0; i < 16; i++)
+    for (int i = 0; i < 16; i++)
     {
-        for (uint8_t j = 0; j < 16; j++)
+        for (int j = 0; j < 16; j++)
         {
-            _image[i][j] = newImage[i][j];
+            image[i][j] = newImage[i][j];
         }
     }
 }
 
 // Macht Bild zu nur nullen
-void Screen::emptyImage()
+void Screen::EmptyImage()
 {
-    for (uint8_t i = 0; i < 16; i++)
+    for (int i = 0; i < 16; i++)
     {
-        for (uint8_t j = 0; j < 16; j++)
+        for (int j = 0; j < 16; j++)
         {
-            _image[i][j] = 0;
+            image[i][j] = 0;
         }
     }
 }
 
 // Empties the buffer
-void Screen::emptyBuffer()
+void Screen::EmptyBuffer()
 {
     for (int i = 0; i < 256; i++)
     {
-        _buffer[i] = 0;
+        buffer[i] = 0;
     }
 }
 
 // Macht ein gewoltes Bild in den Buffer und dieser wird auf den Screen gemalt und angezeigt
-void Screen::update()
+void Screen::Update()
 {
-    LWC_Encode(_buffer, _image, _translationTable);
+    LWC_Encode(buffer, image, translationTable);
 
-    WD_BufferOutput(_buffer);
+    WD_BufferOutput(buffer);
 }
 
 // Ein Funktion von der Glyph Library um den jetzigen zustand vom Screen zu malen
-void Screen::imagePrint()
+void Screen::ImagePrint()
 {
     Serial.println("+----------------------------------+");
     for (int y = 0; y < 16; y++)
@@ -64,7 +64,7 @@ void Screen::imagePrint()
         Serial.print("| ");
         for (int x = 0; x < 16; x++)
         {
-            Serial.print(_image[y][x] > 0 ? "XX" : "  ");
+            Serial.print(image[y][x] > 0 ? "XX" : "  ");
         }
         Serial.println(" |");
     }
@@ -72,12 +72,15 @@ void Screen::imagePrint()
 }
 
 // Setzt ein Pixel auf dem image (lightOn bestimmt ob an oder aus)
-void Screen::setPixel(int x, int y, bool lightOn)
+void Screen::SetPixel(int x, int y, bool lightOn)
 {
-    _image[y][x] = lightOn ? 1 : 0;
+    if ((x >= screenStart && y >= screenStart) && (x <= screenEnd && y <= screenEnd))
+    {
+        image[y][x] = lightOn ? 1 : 0;
+    }
 }
 
-void Screen::drawSpriteOnImage(int x, int y, std::vector<uint8_t> sprite, int width)
+void Screen::DrawSpriteOnImage(int x, int y, std::vector<uint8_t> sprite, int width)
 {
     if (width <= 0)
         return;
@@ -92,11 +95,28 @@ void Screen::drawSpriteOnImage(int x, int y, std::vector<uint8_t> sprite, int wi
                 int pixelX = x + j;
                 int pixelY = y + i;
 
-                if ((pixelX >= 0 && pixelY >= 0) && (pixelX <= 15 && pixelY <= 15))
-                {
-                    setPixel(pixelX, pixelY, true);
-                }
+                SetPixel(pixelX, pixelY, true);
             }
         }
     }
+}
+
+int Screen::GetHeight()
+{
+    return height;
+}
+
+int Screen::GetWidth()
+{
+    return width;
+}
+
+int Screen::GetScreenStart()
+{
+    return screenStart;
+}
+
+int Screen::GetScreenEnd()
+{
+    return screenEnd;
 }

@@ -41,7 +41,7 @@ void JumpMan::Start()
 
 void JumpMan::Draw(Screen &screen)
 {
-    screen.drawSpriteOnImage(JumpManPos.posX, JumpManPos.posY, JumpManSprite, Width);
+    screen.DrawSpriteOnImage(JumpManPos.posX, JumpManPos.posY, JumpManSprite, Width);
 }
 
 void JumpMan::Jump(QwiicButton &leftButton)

@@ -53,8 +53,8 @@ bool Animation::Render(Screen screen)
                 framesWaited++;
             }
 
-            screen.drawImage(frames[currentFrame].image);
-            screen.update();
+            screen.DrawImage(frames[currentFrame].image);
+            screen.Update();
             nextFrameTimer.restart();
         }
         break;

@@ -55,7 +55,7 @@ void Obstacle::MoveObstacleLeft()
 
 void Obstacle::DrawObstacle(Screen &screen)
 {
-    screen.drawSpriteOnImage(ObstaclePos.posX, ObstaclePos.posY, ObstacleSprite, Width);
+    screen.DrawSpriteOnImage(ObstaclePos.posX, ObstaclePos.posY, ObstacleSprite, Width);
 }
 
 bool Obstacle::CheckBoxCollision(int collidingX, int collidingY, std::vector<uint8_t> &collidingSprite, int collidingWidth)
