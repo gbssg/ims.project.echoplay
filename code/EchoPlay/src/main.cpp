@@ -28,8 +28,6 @@ const char pin_SW2 = GPIO_NUM_32; // Optional, falls man den Roten Knopf verwend
 
 enum state
 {
-  PROGRAMM_SELECTION,
-
   PROGRAMM_SETUP,
   PROGRAMM_UPDATE,
 
@@ -137,8 +135,8 @@ void setup()
 
   connectWifi();
 
-  echoScreen.emptyBuffer();
-  echoScreen.update();
+  echoScreen.EmptyBuffer();
+  echoScreen.Update();
 
   leftButton.clearEventBits();
   rightButton.clearEventBits();
@@ -149,12 +147,17 @@ void setup()
   rightButton.enableClickedInterrupt();
 
   selectedProgramm = programms[selectedProgrammNumber];
-  if (selectedProgramm->isGame())
-    selectedGame = static_cast<IGame *>(selectedProgramm);
-  else
-    selectedGame = nullptr;
 
-  programmState = PROGRAMM_SELECTION;
+  if (selectedProgramm->isGame())
+  {
+    selectedGame = static_cast<IGame *>(selectedProgramm);
+    programmState = GAME_SETUP;
+  }
+  else
+  {
+    selectedGame = nullptr;
+    programmState = PROGRAMM_UPDATE;
+  }
 }
 
 void loop()
@@ -180,14 +183,19 @@ void loop()
       {
         selectedProgrammNumber = 0;
       }
+
       selectedProgramm = programms[selectedProgrammNumber];
 
       if (selectedProgramm->isGame())
+      {
         selectedGame = static_cast<IGame *>(selectedProgramm);
+        programmState = GAME_SETUP;
+      }
       else
+      {
         selectedGame = nullptr;
-
-      programmState = PROGRAMM_SELECTION;
+        programmState = PROGRAMM_UPDATE;
+      }
 
       leftButton.clearEventBits();
       rightButton.clearEventBits();
@@ -203,19 +211,6 @@ void loop()
 
     switch (programmState)
     {
-    case PROGRAMM_SELECTION:
-    {
-      if (selectedGame)
-      {
-        programmState = GAME_SETUP;
-      }
-      else
-      {
-        programmState = PROGRAMM_UPDATE;
-      }
-
-      break;
-    }
     case PROGRAMM_SETUP:
     {
       selectedProgramm->setup(echoScreen, leftButton, rightButton);
@@ -278,11 +273,18 @@ void loop()
   {
     if (lastScreenState == true)
     {
-      programmState = PROGRAMM_SELECTION;
+      if (selectedProgramm->isGame())
+      {
+        programmState = GAME_SETUP;
+      }
+      else
+      {
+        programmState = PROGRAMM_UPDATE;
+      }
 
-      echoScreen.emptyImage();
+      echoScreen.EmptyImage();
 
-      echoScreen.update();
+      echoScreen.Update();
     }
   }
 
