@@ -27,6 +27,11 @@ int Ball::GetPrevPosition(Coordinate position)
         return PrevBallPos.posY;
         break;
     }
+    default:
+    {
+        return 0;
+        break;
+    }
     }
 }
 
@@ -87,13 +92,11 @@ void Ball::Bounce(WallPos pos)
     {
     case TOPBOT:
     {
-        Serial.println("BOUNCE TOPBOT");
         BallVelocity.yVel *= -1;
         break;
     }
     case SIDE:
     {
-        Serial.println("BOUNCE SIDE");
         BallVelocity.xVel *= -1;
         break;
     }
@@ -147,6 +150,11 @@ int Ball::GetPosition(Coordinate position)
         return BallPos.posY;
         break;
     }
+    default:
+    {
+        return 0;
+        break;
+    }
     }
 }
 
@@ -176,6 +184,11 @@ float Ball::GetVelocity(Coordinate position)
         return BallVelocity.yVel;
         break;
     }
+    default:
+    {
+        return 0;
+        break;
+    }
     }
 }
 
@@ -202,12 +215,12 @@ void Ball::HandleBlockBounce(Destroyable block)
     }
 }
 
-void Ball::Construct()
+void Ball::SetActive(bool newState)
 {
-    active = true;
+    active = newState;
 }
 
-void Ball::Destroy()
+bool Ball::IsActive()
 {
-    active = false;
+    return active;
 }

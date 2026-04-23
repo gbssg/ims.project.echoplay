@@ -42,6 +42,6 @@ public:
     bool MovingLeft();
     float GetVelocity(Coordinate position);
     void HandleBlockBounce(Destroyable block);
-    void Construct();
-    void Destroy();
+    void SetActive(bool newState);
+    bool IsActive();
 };

@@ -58,21 +58,25 @@ static uint8_t gameOverWinScreen[16][16] = {
 void Arkanoid::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     Destroyables.reserve(MaxDestroyables);
-    DestroyableAmount = MaxDestroyables;
+    DestroyableAmount = StartDestroyableAmount;
 
     Balls.reserve(MaxBalls);
-    BallAmount = 5;
+    BallAmount = StartBallAmount;
+
+    ArkanoidPlatform.SetPosition((screen.GetWidth() / 2) - (ArkanoidPlatform.GetWidth() / 2), screen.GetScreenEnd());
+    ArkanoidPlatform.SetMoveTimer(PlatformMoveTime);
 
     for (int i = 0; i < MaxBalls; i++)
     {
         Balls.emplace_back();
     }
 
-    for (int i = 0; i < BallAmount; i++)
+    for (int i = 0; i < StartBallAmount; i++)
     {
         Balls[i].SetPosition(ArkanoidPlatform.GetPosition(XPOS) + PlatformWidth / 2, ArkanoidPlatform.GetPosition(YPOS) - 1);
         Balls[i].SetVelocity(Speed, -Speed);
         Balls[i].StartMoving();
+        Balls[i].SetActive(true);
     }
 
     for (int i = 0; i < MaxDestroyables; i++)
@@ -90,23 +94,20 @@ void Arkanoid::setup(Screen &screen, QwiicButton &leftButton, QwiicButton &right
         Destroyables[i].Contruct();
     }
 
-    ArkanoidPlatform.SetPosition(5, 15);
-    ArkanoidPlatform.SetMoveTimer(PlatformMoveTime);
-
     gameOver = false;
     PlayerWon = false;
 }
 
 void Arkanoid::start(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.drawImage(TitleScreen);
+    screen.DrawImage(TitleScreen);
 
-    screen.update();
+    screen.Update();
 }
 
 void Arkanoid::update(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
-    screen.emptyImage();
+    screen.EmptyImage();
 
     int platformX = ArkanoidPlatform.GetPosition(XPOS);
     int platformY = ArkanoidPlatform.GetPosition(YPOS);
@@ -122,65 +123,77 @@ void Arkanoid::update(Screen &screen, QwiicButton &leftButton, QwiicButton &righ
 
     for (int i = 0; i < BallAmount; i++)
     {
-        Balls[i].SetPrevPosition();
-        Balls[i].MoveBall();
-
-        int ballX = Balls[i].GetPosition(XPOS);
-        int ballY = Balls[i].GetPosition(YPOS);
-        int prevBallX = Balls[i].GetPrevPosition(XPOS);
-        int prevBallY = Balls[i].GetPrevPosition(YPOS);
-
-        if (ballX < 0 || ballX > 15)
+        if (Balls[i].IsActive())
         {
-            Balls[i].SetPosition(prevBallX, prevBallY);
-            Balls[i].Bounce(SIDE);
-            Balls[i].ForceMoveBall();
-        }
-        if (ballY < 0)
-        {
-            Balls[i].SetPosition(prevBallX, prevBallY);
-            Balls[i].Bounce(TOPBOT);
-            Balls[i].ForceMoveBall();
-        }
+            Balls[i].SetPrevPosition();
+            Balls[i].MoveBall();
 
-        ballX = Balls[i].GetPosition(XPOS);
-        ballY = Balls[i].GetPosition(YPOS);
+            int ballX = Balls[i].GetPosition(XPOS);
+            int ballY = Balls[i].GetPosition(YPOS);
+            int prevBallX = Balls[i].GetPrevPosition(XPOS);
+            int prevBallY = Balls[i].GetPrevPosition(YPOS);
 
-        if (ballY > 15)
-        {
-            gameOver = true;
-        }
-
-        if ((ballX >= platformX && ballX <= (platformX + PlatformWidth - 1)) && ballY == 15)
-        {
-            Balls[i].HandlePlatformBounce(ArkanoidPlatform);
-        }
-
-        for (int j = 0; j < Destroyables.size(); j++)
-        {
-            int destroyableX = Destroyables[j].GetPosition(XPOS);
-            int destroyableY = Destroyables[j].GetPosition(YPOS);
-            int destroyableHeight = Destroyables[j].GetHeight();
-            int destroyableWidth = Destroyables[j].GetWidth();
-
-            bool destroyableHit = (ballY >= destroyableY && ballY <= destroyableY + destroyableHeight - 1) && (ballX >= destroyableX && ballX <= destroyableX + destroyableWidth - 1);
-            bool destroyableDestroyed = Destroyables[j].IsDestroyed();
-
-            if (destroyableHit && !destroyableDestroyed)
+            if (ballX < screen.GetScreenStart() || ballX > screen.GetScreenEnd())
             {
-                DestroyableAmount--;
-                Destroyables[j].Destroy();
-                Balls[i].HandleBlockBounce(Destroyables[j]);
+                Balls[i].SetPosition(prevBallX, prevBallY);
+                Balls[i].Bounce(SIDE);
+                Balls[i].ForceMoveBall();
             }
-        }
+            if (ballY < screen.GetScreenStart())
+            {
+                Balls[i].SetPosition(prevBallX, prevBallY);
+                Balls[i].Bounce(TOPBOT);
+                Balls[i].ForceMoveBall();
+            }
 
-        if (DestroyableAmount <= 0)
-        {
-            PlayerWon = true;
-            gameOver = true;
-        }
+            ballX = Balls[i].GetPosition(XPOS);
+            ballY = Balls[i].GetPosition(YPOS);
 
-        screen.setPixel(ballX, ballY, true);
+            if (ballY > screen.GetScreenEnd())
+            {
+                Balls[i].SetActive(false);
+                BallAmount--;
+                Serial.println("Ball Destroyed");
+                Serial.print("Balls left: ");
+                Serial.println(BallAmount);
+            }
+
+            if ((ballX >= platformX && ballX <= (platformX + PlatformWidth - 1)) && ballY == ArkanoidPlatform.GetPosition(YPOS))
+            {
+                Balls[i].HandlePlatformBounce(ArkanoidPlatform);
+            }
+
+            for (int j = 0; j < Destroyables.size(); j++)
+            {
+                int destroyableX = Destroyables[j].GetPosition(XPOS);
+                int destroyableY = Destroyables[j].GetPosition(YPOS);
+                int destroyableHeight = Destroyables[j].GetHeight();
+                int destroyableWidth = Destroyables[j].GetWidth();
+
+                bool destroyableHit = (ballY >= destroyableY && ballY <= destroyableY + destroyableHeight - 1) && (ballX >= destroyableX && ballX <= destroyableX + destroyableWidth - 1);
+                bool destroyableDestroyed = Destroyables[j].IsDestroyed();
+
+                if (destroyableHit && !destroyableDestroyed)
+                {
+                    DestroyableAmount--;
+                    Destroyables[j].Destroy();
+                    Balls[i].HandleBlockBounce(Destroyables[j]);
+                }
+            }
+
+            if (DestroyableAmount <= 0)
+            {
+                PlayerWon = true;
+                gameOver = true;
+            }
+
+            screen.SetPixel(ballX, ballY, true);
+        }
+    }
+
+    if (BallAmount <= 0)
+    {
+        gameOver = true;
     }
 
     for (int i = 0; i < Destroyables.size(); i++)
@@ -192,24 +205,24 @@ void Arkanoid::update(Screen &screen, QwiicButton &leftButton, QwiicButton &righ
             std::vector<uint8_t> destroyableSprite = Destroyables[i].GetSprite();
             int destroyableWidth = Destroyables[i].GetWidth();
 
-            screen.drawSpriteOnImage(destroyableX, destroyableY, destroyableSprite, destroyableWidth);
+            screen.DrawSpriteOnImage(destroyableX, destroyableY, destroyableSprite, destroyableWidth);
         }
     }
 
-    screen.drawSpriteOnImage(platformX, platformY, PlatformSprite, PlatformWidth);
+    screen.DrawSpriteOnImage(platformX, platformY, PlatformSprite, PlatformWidth);
 
-    screen.update();
+    screen.Update();
 }
 
 void Arkanoid::end(Screen &screen, QwiicButton &leftButton, QwiicButton &rightButton)
 {
     if (PlayerWon)
     {
-        screen.drawImage(gameOverWinScreen);
+        screen.DrawImage(gameOverWinScreen);
     }
     else
     {
-        screen.drawImage(gameOverLoseScreen);
+        screen.DrawImage(gameOverLoseScreen);
     }
-    screen.update();
+    screen.Update();
 }

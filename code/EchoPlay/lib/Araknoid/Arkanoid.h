@@ -17,25 +17,27 @@ class Arkanoid : public IGame
 {
 private:
     std::vector<uint8_t> PlatformSprite = {1, 1, 1, 1, 1, 1};
-    int PlatformWidth = 6;
-    int PlatformMoveTime = 50;
+    const int PlatformWidth = 6;
+    const int PlatformMoveTime = 50;
 
     PlayerPlatform ArkanoidPlatform{PlatformSprite, PlatformWidth};
     int Speed = 20;
 
     std::vector<Ball> Balls;
 
-    int MaxBalls = 15;
-    int BallAmount = 5;
+    const int MaxBalls = 15;
+    const int StartBallAmount = 1;
+    int BallAmount;
 
     std::vector<uint8_t> DestroyableSprite = {1, 1};
     int DestroyableWidth = 2;
 
-    int DestroyablesPerRow = 7;
-    int DestroyablesPreCollumn = 7;
+    const int DestroyablesPerRow = 7;
+    const int DestroyablesPreCollumn = 7;
 
-    int MaxDestroyables = 49;
-    int DestroyableAmount = 49;
+    const int MaxDestroyables = 49;
+    const int StartDestroyableAmount = 49;
+    int DestroyableAmount;
 
     std::vector<Destroyable> Destroyables;
 
