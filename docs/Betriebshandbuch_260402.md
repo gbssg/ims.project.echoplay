@@ -210,7 +210,16 @@ Wenn EchoPlay nicht richtig funktioniert, gibt es einige Schritte, die man unter
 2. Überprüfen Sie die Software: Stellen Sie sicher, dass die neueste Version der Software auf dem ESP32 installiert ist und dass alle benötigten Libraries korrekt installiert sind. Sie können den Reset-Knopf auf dem Carrier-Board drücken, um den ESP32 neu zu starten.
 3. Überprüfen Sie die Verbindungen: Stellen Sie sicher, dass alle Verbindungen zwischen dem ESP32 und der LED-Box korrekt sind und dass keine Pins beschädigt oder lose sind.
 
-Wenn die Uhr nicht funktioniert, überprüfen Sie die WLAN-Verbindung und stellen Sie sicher, dass die "Secrets.h" Datei korrekt konfiguriert ist.
+Wenn nur einer oder beide der Knöpfe nicht funktionieren, kann das heissen das die Andressen welche im Code gebraucht werden nicht gleiche wie die, die die Knöpfe wirklich haben. Um diese Problem zu lösen muss man:
+
+1. Kommentiere den ganzen main code aus indem man ctrl + a drückt und dann ctrl + k + c drückt.
+2. Gehe im EchoPlay Ordner mit dem Code auf den .pio Ordner, lipdeps, SparkFun Qwiic Button and Qwiic Switch Library dann unter examples auf Example5_ChangeI2CAddress. Wähle den ganzen Code in der Datei in diesem Ordner aus und kopiere es mit ctrl + c, dann gehe wieder in den main und füge den Code zuunterst ein mit ctrl + v.
+3. Jetzt beim ESP32 siehe zu das nur 1 der 2 QwiicButton eingesteckt ist.
+4. Jetzt lade den Code mit dem Upload Knopf auf PlatformIO auf den Chip.
+5. Im Serial Monitor, welches man oben rechts bei Visual Studio code öffnen kann, sieht ihr dann Text welches sagt das ein Knopft endeckt wurde. Ihr wollte die Address dieses Knopfes ändern also geht ihr weiter. Dann könnt ihr für euern Knopf den ihr als linken Knopf braucht die Address 0x0C eingeben. Jetzt könnt ihr diesen Knopf ausstecken und den anderen ein stecken und für diesen die Addresse 0x10 eingeben. Merkt euch welches der linke und welches der rechte Knopf ist.
+6. Jetzt könnt ihr beide Knöpf wieder gleich einstecken wie am Anfang und denn Code welches ihr im main eingefügt habt löschen und den originallen main code wieder auskommentieren indem ihr alles auswählt und ctrl + k + u drückt.
+
+Wenn die Uhr nicht funktioniert, überprüfen Sie die WLAN-Verbindung und stellen Sie sicher, dass die "Secrets.h" Datei korrekt konfiguriert ist. Anleitung findet man unter [Konfiguration](#konfiguration).
 
 # Verzeichnisse
 
